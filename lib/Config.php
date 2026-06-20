@@ -2,73 +2,75 @@
 
 namespace Vendor\Xmldoc;
 
-use Bitrix\Main\Config\Option;
+use Vendor\Xmldoc\Contract\ConfigInterface;
 
-/** Настройки модуля из b_option */
+/** Настройки модуля из b_option (фасад над ConfigInterface). */
 class Config
 {
-    private const MODULE = 'vendor.xmldoc';
+    private static ?ConfigInterface $instance = null;
+
+    public static function setInstance(?ConfigInterface $instance): void
+    {
+        self::$instance = $instance;
+    }
+
+    private static function i(): ConfigInterface
+    {
+        return self::$instance ??= new ModuleConfig();
+    }
 
     public static function dadataApiKey(): string
     {
-        return (string)Option::get(self::MODULE, 'dadata_api_key', '');
+        return self::i()->dadataApiKey();
     }
 
     public static function sellerRequisiteId(): int
     {
-        return (int)Option::get(self::MODULE, 'seller_requisite_id', 0);
+        return self::i()->sellerRequisiteId();
     }
 
     public static function signatoryUserId(): int
     {
-        return (int)Option::get(self::MODULE, 'signatory_user_id', 0);
+        return self::i()->signatoryUserId();
     }
 
-    /** settings — из настроек; current_user — кто нажал кнопку / запустил БП */
     public static function signatoryMode(): string
     {
-        return (string)Option::get(self::MODULE, 'signatory_mode', 'settings');
+        return self::i()->signatoryMode();
     }
 
     public static function signatoryPosition(): string
     {
-        return (string)Option::get(self::MODULE, 'signatory_position', 'Сотрудник');
+        return self::i()->signatoryPosition();
     }
 
     public static function smartInvoiceTypeId(): int
     {
-        return (int)Option::get(self::MODULE, 'smart_invoice_type_id', '31');
+        return self::i()->smartInvoiceTypeId();
     }
 
     public static function publishTimeline(): bool
     {
-        return Option::get(self::MODULE, 'publish_timeline', 'Y') === 'Y';
+        return self::i()->publishTimeline();
     }
 
     public static function xsdPath(): string
     {
-        $path = (string)Option::get(self::MODULE, 'xsd_path', '');
-        if ($path !== '' && is_file($path)) {
-            return $path;
-        }
-
-        // XSD только если явно указан в настройках (не валидируем по заглушке)
-        return '';
+        return self::i()->xsdPath();
     }
 
     public static function updFunction(): string
     {
-        return (string)Option::get(self::MODULE, 'upd_function', 'СЧФДОП');
+        return self::i()->updFunction();
     }
 
-    /** Кодировка сохраняемого файла (windows-1251 для Диадок) */
     public static function fileEncoding(): string
     {
-        return (string)Option::get(self::MODULE, 'file_encoding', 'windows-1251');
+        return self::i()->fileEncoding();
     }
 
     public static function mappingPath(): string
     {
-        return dirname(__DIR__) . '/config/mapping/upd.php';
+        return self::i()->mappingPath();
     }
 }

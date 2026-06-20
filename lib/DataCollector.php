@@ -36,7 +36,6 @@ class DataCollector
         $buyer = $companyId > 0 ? $this->fetchBuyer($companyId) : [];
         if (!empty($buyer['REQUISITE_ID'])) {
             $buyer = $this->dadata->enrich($buyer);
-            $this->dadata->persistToCrm((int)$buyer['REQUISITE_ID'], $buyer);
         }
 
         return [

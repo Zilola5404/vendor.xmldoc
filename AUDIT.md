@@ -1,6 +1,6 @@
 # Технический аудит модуля vendor.xmldoc по ТЗ
 
-**Версия модуля:** 1.4.0  
+**Версия модуля:** 1.6.0  
 **Дата аудита:** 2026-06-17  
 **Статус:** MVP реализован в коде; готов к приёмочному тестированию на портале.
 
@@ -215,7 +215,7 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 1. Интеграция Diadoc / SBIS
 2. Облако B24 (D7 CRM Service API вместо legacy)
 3. REST Marketplace-приложение
-4. Автотесты PHPUnit
+4. Автотесты PHPUnit — базовое покрытие в `tests/Unit/` (v1.6.0)
 5. Полная XSD ФНС 5.03 (нужен файл от заказчика)
 6. Дополнительные типы документов (УКД, акт…)
 
@@ -234,10 +234,36 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 
 ---
 
+## Исправления по аудиту (v1.6.0)
+
+| # | Замечание | Статус | Решение |
+|---|-----------|--------|---------|
+| Баг #1 | Двойной `<СумНал>` | ✅ не баг | Структура `<СумНал><СумНал>…</СумНал></СумНал>` совпадает с образцом Diadoc `edo_6608_*.xml` (ФНС 5.03) |
+| Баг #2 | `CCrmDeal::Update()` без проверки | ✅ | `FileSaver::attachToEntity()` — проверка результата + `Logger::write` |
+| Баг #3 | WriterBuffer только DOM | ✅ | `Xml/WriterBuffer` — `ext-xmlwriter` с fallback на DOM |
+| Риск #1 | sessid в URL | ✅ | `install/js/generate.js` — sessid только в POST-теле |
+| Риск #2 | SQL через `$DB` | ✅ | `Logger`, `DocumentRegistry` — D7 `Application::getConnection()` |
+| Риск #3 | Race в `persistAddress` | ✅ | Транзакция в `DadataClient::persistAddress()` |
+| Арх. #1 | Дублирование API GenerateService | ✅ | Единая точка входа `runFromDto()` + `GenerateRequestDto` |
+| Арх. #3 | Config без DI | ✅ | `Contract/ConfigInterface`, `ModuleConfig`, `Config::setInstance()` |
+| Арх. #4 | DaData save до XML | ✅ | `DataCollector` только enrich; persist после успешного save |
+| ТЗ Диск CRM | CFile без Disk | ✅ | `Crm/DiskStorage` — загрузка в папку CRM через `DiskManager` |
+| ТЗ Timeline | CommentEntry | ✅ | `Crm/TimelinePublisher` — `LogMessageEntry` + fallback `CommentEntry` |
+| ТЗ UF СП | Захардкожен CRM_31 | ✅ | `options.php` — `InstallUserFields()` при смене `smart_invoice_type_id` |
+| Тесты | PHPUnit | ✅ | `tests/Unit/` — UpdMapper, UpdValidator, ValidationMessages |
+
+### Вне scope v1.6.0 (этап 1.5+)
+
+- Потоковая запись XML напрямую в файл (не в память)
+- Очередь генерации при высокой нагрузке
+- Полный переход на CRM Service API вместо `CCrmDeal`
+
+---
+
 ## Обновление на портале
 
 1. Скопировать модуль → `/local/modules/vendor.xmldoc`
-2. **Marketplace → Обновить** до **1.3.0**
+2. **Marketplace → Обновить** до **1.6.0**
 3. Очистить кеш
 4. Проверить: `/local/activities/xmldocgenerateupd/` появилась
 5. CRM → Роботы → действие **«Сформировать УПД (XML)»**

@@ -2,6 +2,9 @@
 
 namespace Vendor\Xmldoc;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\DateTime;
+
 /** Журнал операций в b_xmldoc_log */
 class Logger
 {
@@ -13,19 +16,15 @@ class Logger
     public static function write(string $entityType, int $entityId, string $status, string $message = ''): void
     {
         try {
-            global $DB;
+            $connection = Application::getConnection();
+            $sqlHelper = $connection->getSqlHelper();
+            $createdAt = $sqlHelper->getDateTimeFunction(new DateTime());
 
-            $sql = sprintf(
+            $connection->queryExecute(
                 "INSERT INTO b_xmldoc_log (ENTITY_TYPE, ENTITY_ID, STATUS, MESSAGE, CREATED_AT)
-                 VALUES ('%s', %d, '%s', '%s', %s)",
-                $DB->ForSql($entityType),
-                $entityId,
-                $DB->ForSql($status),
-                $DB->ForSql($message),
-                $DB->CharToDateFunction(date('Y-m-d H:i:s'), 'FULL')
+                 VALUES (?, ?, ?, ?, {$createdAt})",
+                [$entityType, $entityId, $status, $message]
             );
-
-            $DB->Query($sql);
         } catch (\Throwable) {
             // Лог не должен прерывать генерацию
         }
@@ -36,24 +35,33 @@ class Logger
      */
     public static function fetchList(int $limit = 100, ?string $entityType = null, ?int $entityId = null): array
     {
-        global $DB;
-
         $limit = max(1, min(500, $limit));
-        $where = '1=1';
-
-        if ($entityType !== null && $entityType !== '') {
-            $where .= " AND ENTITY_TYPE='" . $DB->ForSql($entityType) . "'";
-        }
-        if ($entityId !== null && $entityId > 0) {
-            $where .= ' AND ENTITY_ID=' . (int)$entityId;
-        }
 
         try {
+            $connection = Application::getConnection();
+            $sqlHelper = $connection->getSqlHelper();
+
+            $where = '1=1';
+            $params = [];
+
+            if ($entityType !== null && $entityType !== '') {
+                $where .= ' AND ENTITY_TYPE = ?';
+                $params[] = $entityType;
+            }
+            if ($entityId !== null && $entityId > 0) {
+                $where .= ' AND ENTITY_ID = ?';
+                $params[] = $entityId;
+            }
+
+            $params[] = $limit;
+
             $rows = [];
-            $res = $DB->Query(
-                "SELECT * FROM b_xmldoc_log WHERE {$where} ORDER BY ID DESC LIMIT " . $limit
+            $result = $connection->query(
+                "SELECT * FROM b_xmldoc_log WHERE {$where} ORDER BY ID DESC LIMIT ?",
+                $params
             );
-            while ($row = $res->Fetch()) {
+
+            while ($row = $result->fetch()) {
                 $rows[] = $row;
             }
 

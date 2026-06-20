@@ -257,9 +257,6 @@
         };
 
         var url = cfg.ajaxUrl;
-        if (cfg.sessid) {
-            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'sessid=' + encodeURIComponent(cfg.sessid);
-        }
 
         BX.ajax({
             url: url,

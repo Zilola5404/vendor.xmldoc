@@ -4,6 +4,8 @@ namespace Vendor\Xmldoc\Bp;
 
 use Vendor\Xmldoc\DataCollector;
 use Vendor\Xmldoc\GenerateService;
+use Vendor\Xmldoc\Dto\EntityContextDto;
+use Vendor\Xmldoc\Dto\GenerateRequestDto;
 
 /**
  * Запуск генерации УПД из PHP-кода бизнес-процесса.
@@ -31,7 +33,11 @@ class Runner
         }
 
         $service = new GenerateService();
+        $request = new GenerateRequestDto(
+            EntityContextDto::from($entityType, $entityId, 0),
+            true
+        );
 
-        return $service->run($entityType, $entityId)->toArray();
+        return $service->runFromDto($request)->toArray();
     }
 }

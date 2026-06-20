@@ -9,6 +9,8 @@ use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
 use Vendor\Xmldoc\Bp\EntityResolver;
 use Vendor\Xmldoc\CrmPermissions;
+use Vendor\Xmldoc\Dto\EntityContextDto;
+use Vendor\Xmldoc\Dto\GenerateRequestDto;
 use Vendor\Xmldoc\GenerateService;
 
 IncludeModuleLangFile(__FILE__);
@@ -154,7 +156,11 @@ class CBPXmldocGenerateUpd extends XmldocGenerateUpdBase
             return $this->fail(CrmPermissions::getDenyMessage(), [], true);
         }
 
-        $result = (new GenerateService())->run($entityType, $entityId, !$skipPermissions)->toArray();
+        $request = new GenerateRequestDto(
+            EntityContextDto::from($entityType, $entityId, 0),
+            !$skipPermissions
+        );
+        $result = (new GenerateService())->runFromDto($request)->toArray();
 
         if (!empty($result['success'])) {
             $this->Success = true;

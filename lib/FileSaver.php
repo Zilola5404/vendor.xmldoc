@@ -2,13 +2,15 @@
 
 namespace Vendor\Xmldoc;
 
-use Bitrix\Crm\Timeline\CommentEntry;
-use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\DateTime;
+use Vendor\Xmldoc\Crm\DiskStorage;
+use Vendor\Xmldoc\Crm\TimelinePublisher;
 
 /**
  * Сохранение XML.
  * UF_UPD_FILE — только актуальная версия.
- * Каждая генерация — новый CFile; старые file_id остаются в b_xmldoc_document (физическая история).
+ * Каждая генерация — новый файл; старые file_id остаются в b_xmldoc_document (физическая история).
  */
 class FileSaver
 {
@@ -25,12 +27,8 @@ class FileSaver
         $encoding = Config::fileEncoding();
         $xmlContent = XmlEncoder::forStorage($utf8Xml);
 
-        $fileId = (int)\CFile::SaveFile([
-            'name'      => $storageName,
-            'type'      => 'application/xml',
-            'content'   => $xmlContent,
-            'MODULE_ID' => 'vendor.xmldoc',
-        ], 'xmldoc');
+        $saved = DiskStorage::save($storageName, $xmlContent, $entityTypeId, $entityId);
+        $fileId = (int)$saved['fileId'];
 
         if ($fileId <= 0) {
             throw new \RuntimeException('Не удалось сохранить файл на диск');
@@ -51,7 +49,7 @@ class FileSaver
         );
 
         if (Config::publishTimeline()) {
-            $this->publishTimeline($entityTypeId, $entityId, $fileName, $fileId, $version);
+            TimelinePublisher::publishDocumentGenerated($entityTypeId, $entityId, $fileName, $fileId, $version);
         }
 
         return [
@@ -61,6 +59,7 @@ class FileSaver
             'version'    => $version,
             'encoding'   => $encoding,
             'docStatus'  => DocumentStatus::GENERATED,
+            'diskUploaded' => (bool)$saved['diskUploaded'],
         ];
     }
 
@@ -70,13 +69,22 @@ class FileSaver
         int $entityTypeId,
         int $fileId
     ): void {
-        Loader::includeModule('crm');
+        \Bitrix\Main\Loader::includeModule('crm');
 
         if ($entityType === DataCollector::TYPE_DEAL) {
             $fields = ['UF_UPD_FILE' => $fileId];
             $options = ['CHECK_PERMISSIONS' => 'N'];
             $deal = new \CCrmDeal(false);
-            $deal->Update($entityId, $fields, true, true, $options);
+            $result = $deal->Update($entityId, $fields, true, true, $options);
+
+            if (!$result) {
+                Logger::write(
+                    $entityType,
+                    $entityId,
+                    Logger::STATUS_ERROR,
+                    'Ошибка записи UF_UPD_FILE: ' . (string)$deal->LAST_ERROR
+                );
+            }
 
             return;
         }
@@ -84,45 +92,40 @@ class FileSaver
         if ($entityType === DataCollector::TYPE_SMART_INVOICE) {
             $factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
             if ($factory === null) {
+                Logger::write(
+                    $entityType,
+                    $entityId,
+                    Logger::STATUS_ERROR,
+                    'Не найден factory смарт-процесса для записи UF_UPD_FILE'
+                );
+
                 return;
             }
+
             $item = $factory->getItem($entityId);
             if ($item === null) {
+                Logger::write(
+                    $entityType,
+                    $entityId,
+                    Logger::STATUS_ERROR,
+                    'Элемент смарт-процесса не найден для записи UF_UPD_FILE'
+                );
+
                 return;
             }
+
             $item->set('UF_UPD_FILE', $fileId);
-            $factory->getUpdateOperation($item)->disableAllChecks()->launch();
+            $operation = $factory->getUpdateOperation($item)->disableAllChecks();
+            $updateResult = $operation->launch();
+
+            if (!$updateResult->isSuccess()) {
+                Logger::write(
+                    $entityType,
+                    $entityId,
+                    Logger::STATUS_ERROR,
+                    'Ошибка записи UF_UPD_FILE: ' . implode('; ', $updateResult->getErrorMessages())
+                );
+            }
         }
-    }
-
-    private function publishTimeline(
-        int $entityTypeId,
-        int $entityId,
-        string $fileName,
-        int $fileId,
-        int $version
-    ): void {
-        if (!class_exists(CommentEntry::class)) {
-            return;
-        }
-
-        global $USER;
-        $authorId = (int)($USER instanceof \CUser ? $USER->GetID() : 0);
-        $url = htmlspecialcharsbx((string)\CFile::GetPath($fileId));
-        $text = sprintf(
-            'Сформирован документ <a href="%s" target="_blank">%s</a> (версия %d, статус: %s)',
-            $url,
-            htmlspecialcharsbx($fileName),
-            $version,
-            DocumentStatus::GENERATED
-        );
-
-        CommentEntry::create([
-            'TEXT'      => $text,
-            'AUTHOR_ID' => $authorId > 0 ? $authorId : 1,
-            'BINDINGS'  => [
-                ['ENTITY_TYPE_ID' => $entityTypeId, 'ENTITY_ID' => $entityId],
-            ],
-        ]);
     }
 }

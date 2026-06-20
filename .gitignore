@@ -5,6 +5,8 @@
 .env.*
 Thumbs.db
 .DS_Store
+tests/vendor/
+tests/.phpunit.cache/
 
 # Тестовые XML в корне модуля (не для репозитория)
 /*.xml

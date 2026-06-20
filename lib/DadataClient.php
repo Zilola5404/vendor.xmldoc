@@ -3,6 +3,7 @@
 namespace Vendor\Xmldoc;
 
 use Bitrix\Crm\AddressTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 
@@ -184,28 +185,40 @@ class DadataClient
             $fields['ADDRESS_FULL'] = (string)$requisite['ADDRESS_FULL'];
         }
 
-        $existing = AddressTable::getList([
-            'filter' => [
-                '=ENTITY_TYPE_ID' => $entityTypeId,
-                '=ENTITY_ID'      => $requisiteId,
-            ],
-            'order'  => ['TYPE_ID' => 'ASC'],
-            'limit'  => 1,
-        ])->fetch();
+        $connection = Application::getConnection();
+        $connection->startTransaction();
 
         try {
+            $existing = AddressTable::getList([
+                'filter' => [
+                    '=ENTITY_TYPE_ID' => $entityTypeId,
+                    '=ENTITY_ID'      => $requisiteId,
+                ],
+                'order'  => ['TYPE_ID' => 'ASC'],
+                'limit'  => 1,
+            ])->fetch();
+
             if ($existing) {
-                AddressTable::update([
+                $updateResult = AddressTable::update([
                     'TYPE_ID'        => (int)($existing['TYPE_ID'] ?? $typeId),
                     'ENTITY_TYPE_ID' => (int)$entityTypeId,
                     'ENTITY_ID'      => $requisiteId,
                 ], $fields);
 
-                return;
+                if (!$updateResult->isSuccess()) {
+                    throw new \RuntimeException(implode('; ', $updateResult->getErrorMessages()));
+                }
+            } else {
+                $addResult = AddressTable::add($fields);
+
+                if (!$addResult->isSuccess()) {
+                    throw new \RuntimeException(implode('; ', $addResult->getErrorMessages()));
+                }
             }
 
-            AddressTable::add($fields);
+            $connection->commitTransaction();
         } catch (\Throwable) {
+            $connection->rollbackTransaction();
             // Сохранение адреса не должно блокировать генерацию УПД
         }
     }

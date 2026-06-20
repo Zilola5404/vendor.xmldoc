@@ -6,6 +6,8 @@ use Bitrix\Main\Loader;
 use Vendor\Xmldoc\CrmPermissions;
 use Vendor\Xmldoc\DataCollector;
 use Vendor\Xmldoc\GenerateResult;
+use Vendor\Xmldoc\Dto\GenerateRequestDto;
+use Vendor\Xmldoc\Dto\EntityContextDto;
 use Vendor\Xmldoc\GenerateService;
 
 /** Общая логика AJAX-генерации УПД */
@@ -40,7 +42,11 @@ class GenerateEndpoint
         }
 
         $service = new GenerateService();
+        $request = new GenerateRequestDto(
+            EntityContextDto::from($entityType, $entityId, 0),
+            false
+        );
 
-        return $service->run($entityType, $entityId, false)->toArray();
+        return $service->runFromDto($request)->toArray();
     }
 }

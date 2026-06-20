@@ -8,6 +8,8 @@ use Bitrix\Main\Loader;
 use Vendor\Xmldoc\CrmPermissions;
 use Vendor\Xmldoc\DataCollector;
 use Vendor\Xmldoc\GenerateResult;
+use Vendor\Xmldoc\Dto\EntityContextDto;
+use Vendor\Xmldoc\Dto\GenerateRequestDto;
 use Vendor\Xmldoc\GenerateService;
 
 /** AJAX: vendor.xmldoc:upd.generate */
@@ -40,6 +42,11 @@ class Upd extends Controller
             return GenerateResult::fail(['Некорректные параметры запроса'])->toArray();
         }
 
-        return (new GenerateService())->run($entityType, $entityId, false)->toArray();
+        $request = new GenerateRequestDto(
+            EntityContextDto::from($entityType, $entityId, 0),
+            false
+        );
+
+        return (new GenerateService())->runFromDto($request)->toArray();
     }
 }

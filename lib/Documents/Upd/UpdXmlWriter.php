@@ -257,6 +257,7 @@ class UpdXmlWriter
             $w->endElement();
             $w->endElement();
 
+            // ФНС 5.03 / Diadoc: контейнер СумНал → вложенный СумНал со значением (см. edo_6608_*.xml)
             $w->startElement('СумНал');
             $w->startElement('СумНал');
             $w->text($this->formatMoney((float)($row['TAX_SUM'] ?? 0)));

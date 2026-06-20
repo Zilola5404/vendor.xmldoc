@@ -3,23 +3,43 @@
 namespace Vendor\Xmldoc\Xml;
 
 /**
- * Лёгкая замена PHP XMLWriter на DOMDocument (ext-dom обычно есть на B24).
- * API повторяет только те методы, которые использует UpdXmlWriter.
+ * Потоковая генерация XML через ext-xmlwriter с fallback на DOMDocument (ext-dom).
+ * API повторяет методы, используемые UpdXmlWriter.
  */
 final class WriterBuffer
 {
-    private \DOMDocument $dom;
+    private bool $useXmlWriter = false;
+
+    private ?\XMLWriter $xw = null;
+
+    private ?\DOMDocument $dom = null;
 
     /** @var \DOMElement[] */
     private array $stack = [];
 
     public function openMemory(): void
     {
+        if (extension_loaded('xmlwriter')) {
+            $this->useXmlWriter = true;
+            $this->xw = new \XMLWriter();
+            $this->xw->openMemory();
+            $this->xw->setIndent(false);
+
+            return;
+        }
+
+        $this->useXmlWriter = false;
         $this->stack = [];
     }
 
     public function startDocument(string $version, string $encoding): void
     {
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $this->xw->startDocument($version, $encoding);
+
+            return;
+        }
+
         if (!class_exists(\DOMDocument::class)) {
             throw new \RuntimeException(
                 'На сервере не установлено расширение PHP DOM (ext-dom). Обратитесь к администратору портала.'
@@ -33,6 +53,12 @@ final class WriterBuffer
 
     public function startElement(string $name): void
     {
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $this->xw->startElement($name);
+
+            return;
+        }
+
         $element = $this->dom->createElement($name);
 
         if ($this->stack === []) {
@@ -46,6 +72,12 @@ final class WriterBuffer
 
     public function writeAttribute(string $name, string $value): void
     {
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $this->xw->writeAttribute($name, $value);
+
+            return;
+        }
+
         if ($this->stack === []) {
             return;
         }
@@ -55,6 +87,12 @@ final class WriterBuffer
 
     public function text(string $content): void
     {
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $this->xw->text($content);
+
+            return;
+        }
+
         if ($this->stack === []) {
             return;
         }
@@ -64,6 +102,12 @@ final class WriterBuffer
 
     public function endElement(): void
     {
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $this->xw->endElement();
+
+            return;
+        }
+
         if ($this->stack !== []) {
             array_pop($this->stack);
         }
@@ -71,7 +115,13 @@ final class WriterBuffer
 
     public function outputMemory(): string
     {
-        $xml = $this->dom->saveXML();
+        if ($this->useXmlWriter && $this->xw !== null) {
+            $xml = $this->xw->outputMemory(true);
+
+            return is_string($xml) ? $xml : '';
+        }
+
+        $xml = $this->dom?->saveXML();
 
         return is_string($xml) ? $xml : '';
     }

@@ -34,6 +34,8 @@ $optionCodes = [
 
 // Сохранение
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
+    $oldSmartTypeId = (int)Option::get($module_id, 'smart_invoice_type_id', '31');
+
     foreach ($optionCodes as $code) {
         if ($code === 'publish_timeline') {
             $value = isset($_POST[$code]) && $_POST[$code] === 'Y' ? 'Y' : 'N';
@@ -42,6 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
         }
         Option::set($module_id, $code, $value);
     }
+
+    $newSmartTypeId = (int)Option::get($module_id, 'smart_invoice_type_id', '31');
+    if ($newSmartTypeId > 0 && $newSmartTypeId !== $oldSmartTypeId) {
+        Loader::includeModule('vendor.xmldoc');
+        $module = CModule::CreateModuleObject('vendor.xmldoc');
+        if ($module !== null && method_exists($module, 'InstallUserFields')) {
+            $module->InstallUserFields();
+        }
+    }
+
     LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . '&saved=Y');
 }
 

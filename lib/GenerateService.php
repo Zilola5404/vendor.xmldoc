@@ -4,6 +4,7 @@ namespace Vendor\Xmldoc;
 
 use Vendor\Xmldoc\Automation\TriggerService;
 use Vendor\Xmldoc\Documents\Upd\UpdBuilder;
+use Vendor\Xmldoc\Dto\EntityContextDto;
 use Vendor\Xmldoc\Dto\GenerateRequestDto;
 
 /** Оркестратор: сбор данных → валидация → XML → сохранение */
@@ -14,26 +15,21 @@ class GenerateService
         private readonly UpdBuilder $builder = new UpdBuilder(),
         private readonly XmlValidator $xmlValidator = new XmlValidator(),
         private readonly FileSaver $fileSaver = new FileSaver(),
+        private readonly DadataClient $dadata = new DadataClient(),
     ) {
     }
 
     public function runFromDto(GenerateRequestDto $request): GenerateResult
     {
-        return $this->run(
-            $request->context->entityType,
-            $request->context->entityId,
-            $request->checkPermissions
-        );
-    }
+        $entityType = $request->context->entityType;
+        $entityId = $request->context->entityId;
 
-    public function run(string $entityType, int $entityId, bool $checkPermissions = true): GenerateResult
-    {
         Logger::write($entityType, $entityId, Logger::STATUS_STARTED, 'Запуск генерации УПД');
 
         try {
             \Bitrix\Main\Loader::includeModule('crm');
 
-            if ($checkPermissions && !CrmPermissions::canGenerate($entityType, $entityId)) {
+            if ($request->checkPermissions && !CrmPermissions::canGenerate($entityType, $entityId)) {
                 $msg = CrmPermissions::getDenyMessage();
                 Logger::write($entityType, $entityId, Logger::STATUS_ERROR, $msg);
 
@@ -84,6 +80,8 @@ class GenerateService
                 $docNumber
             );
 
+            $this->persistBuyerEnrichment($crmData);
+
             Logger::write(
                 $entityType,
                 $entityId,
@@ -112,5 +110,32 @@ class GenerateService
 
             return GenerateResult::fail([$e->getMessage()]);
         }
+    }
+
+    /** @param array<string, mixed> $crmData */
+    private function persistBuyerEnrichment(array $crmData): void
+    {
+        $buyer = $crmData['buyer'] ?? [];
+        if (empty($buyer['REQUISITE_ID']) || empty($buyer['_DADATA_ENRICHED'])) {
+            return;
+        }
+
+        try {
+            $this->dadata->persistToCrm((int)$buyer['REQUISITE_ID'], $buyer);
+        } catch (\Throwable) {
+            // Обогащение CRM не должно отменять успешную генерацию
+        }
+    }
+
+    public static function request(
+        string $entityType,
+        int $entityId,
+        bool $checkPermissions = true,
+        int $ownerTypeId = 0
+    ): GenerateRequestDto {
+        return new GenerateRequestDto(
+            EntityContextDto::from($entityType, $entityId, $ownerTypeId),
+            $checkPermissions
+        );
     }
 }
