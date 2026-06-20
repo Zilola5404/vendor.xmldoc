@@ -1,0 +1,11 @@
+/.idea/
+/.vscode/
+*.log
+.env
+.env.*
+Thumbs.db
+.DS_Store
+
+# Тестовые XML в корне модуля (не для репозитория)
+/*.xml
+!config/schemas/*.xsd
