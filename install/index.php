@@ -73,9 +73,7 @@ class vendor_xmldoc extends CModule
         $this->InstallActivities();
         $this->InstallTriggers();
         $this->InstallOptions();
-        if ($isNew) {
-            $this->InstallUserFields();
-        }
+        $this->InstallUserFields();
 
         return true;
     }
@@ -381,10 +379,17 @@ class vendor_xmldoc extends CModule
             return true;
         }
 
+        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xmldoc', 'smart_invoice_type_id', '31');
+
+        if (class_exists(\Vendor\Xmldoc\Install\UserFieldInstaller::class)) {
+            \Vendor\Xmldoc\Install\UserFieldInstaller::installAll($smartTypeId);
+
+            return true;
+        }
+
         $this->ensureUserField('CRM_DEAL', 'UF_UPD_NUMBER', 'string', 'Номер УПД (1С)');
         $this->ensureUserField('CRM_DEAL', 'UF_UPD_FILE', 'file', 'Файл УПД');
 
-        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xmldoc', 'smart_invoice_type_id', '31');
         if ($smartTypeId > 0) {
             $entityId = 'CRM_' . $smartTypeId;
             $this->ensureUserField($entityId, 'UF_UPD_NUMBER', 'string', 'Номер УПД (1С)');

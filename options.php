@@ -32,10 +32,18 @@ $optionCodes = [
     'file_encoding',
 ];
 
+// Принудительное создание UF_UPD_* (сделки + СП «Счета»)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['install_uf'])) {
+    Loader::includeModule('vendor.xmldoc');
+    $module = CModule::CreateModuleObject('vendor.xmldoc');
+    if ($module !== null && method_exists($module, 'InstallUserFields')) {
+        $module->InstallUserFields();
+    }
+    LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . '&uf=Y');
+}
+
 // Сохранение
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
-    $oldSmartTypeId = (int)Option::get($module_id, 'smart_invoice_type_id', '31');
-
     foreach ($optionCodes as $code) {
         if ($code === 'publish_timeline') {
             $value = isset($_POST[$code]) && $_POST[$code] === 'Y' ? 'Y' : 'N';
@@ -45,13 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
         Option::set($module_id, $code, $value);
     }
 
-    $newSmartTypeId = (int)Option::get($module_id, 'smart_invoice_type_id', '31');
-    if ($newSmartTypeId > 0 && $newSmartTypeId !== $oldSmartTypeId) {
-        Loader::includeModule('vendor.xmldoc');
-        $module = CModule::CreateModuleObject('vendor.xmldoc');
-        if ($module !== null && method_exists($module, 'InstallUserFields')) {
-            $module->InstallUserFields();
-        }
+    Loader::includeModule('vendor.xmldoc');
+    $module = CModule::CreateModuleObject('vendor.xmldoc');
+    if ($module !== null && method_exists($module, 'InstallUserFields')) {
+        $module->InstallUserFields();
     }
 
     LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . '&saved=Y');
@@ -68,6 +73,10 @@ $tabControl = new CAdminTabControl('tabControl', $aTabs);
 
 if (!empty($_GET['saved'])) {
     CAdminMessage::ShowMessage(['MESSAGE' => 'Настройки сохранены', 'TYPE' => 'OK']);
+}
+
+if (!empty($_GET['uf'])) {
+    CAdminMessage::ShowMessage(['MESSAGE' => 'Поля UF_UPD_NUMBER и UF_UPD_FILE проверены/созданы', 'TYPE' => 'OK']);
 }
 ?>
 
@@ -149,6 +158,7 @@ if (!empty($_GET['saved'])) {
 
     <?php $tabControl->Buttons(); ?>
     <input type="submit" name="save" value="Сохранить" class="adm-btn-save">
+    <input type="submit" name="install_uf" value="Создать поля УПД" class="adm-btn" title="UF_UPD_NUMBER и UF_UPD_FILE для сделок и СП «Счета»">
     <?php $tabControl->End(); ?>
 </form>
 

@@ -173,7 +173,6 @@ class CBPXmldocGenerateUpd extends XmldocGenerateUpdBase
             $this->WriteToTrackingService(
                 Loc::getMessage('VENDOR_XMLDOC_BP_TRACK_OK', [
                     '#FILE#' => $this->FileName,
-                    '#VER#'  => $this->Version,
                 ]),
                 0,
                 CBPTrackingType::Report

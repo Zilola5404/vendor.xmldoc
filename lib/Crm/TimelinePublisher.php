@@ -3,7 +3,6 @@
 namespace Vendor\Xmldoc\Crm;
 
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\DocumentStatus;
 
 /** Публикация события генерации УПД в таймлайн CRM. */
 final class TimelinePublisher
@@ -25,11 +24,9 @@ final class TimelinePublisher
 
         $url = htmlspecialcharsbx((string)\CFile::GetPath($fileId));
         $text = sprintf(
-            'Сформирован документ <a href="%s" target="_blank">%s</a> (версия %d, статус: %s)',
+            'Сформирован документ <a href="%s" target="_blank">%s</a>',
             $url,
-            htmlspecialcharsbx($fileName),
-            $version,
-            DocumentStatus::GENERATED
+            htmlspecialcharsbx($fileName)
         );
 
         $bindings = [

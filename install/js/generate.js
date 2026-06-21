@@ -223,13 +223,7 @@
             if (data.fileName) {
                 msg += ': ' + data.fileName;
             }
-            if (data.version) {
-                msg += ' (версия ' + data.version + ')';
-            }
             showMessage(msg, false);
-            if (data.fileUrl) {
-                window.open(data.fileUrl, '_blank');
-            }
             return;
         }
 
