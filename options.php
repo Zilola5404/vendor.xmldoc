@@ -30,7 +30,18 @@ $optionCodes = [
     'xsd_path',
     'upd_function',
     'file_encoding',
+    'crm_adapter',
+    'cloud_rest_webhook',
 ];
+
+$portalLabel = 'не определён';
+$runtimeModuleId = 'vendor.xmldoc';
+$runtimeReady = true;
+if (Loader::includeModule('vendor.xmldoc') && class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)) {
+    $portalLabel = \Vendor\Xmldoc\Environment\PortalEnvironment::label();
+    $runtimeModuleId = \Vendor\Xmldoc\Environment\PortalEnvironment::activeRuntimeModuleId();
+    $runtimeReady = \Vendor\Xmldoc\Environment\PortalEnvironment::isCloudRuntimeReady();
+}
 
 // Принудительное создание UF_UPD_* (сделки + СП «Счета»)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['install_uf'])) {
@@ -153,6 +164,37 @@ if (!empty($_GET['uf'])) {
                 <option value="windows-1251" <?= Option::get($module_id, 'file_encoding', 'windows-1251') === 'windows-1251' ? 'selected' : '' ?>>windows-1251 (Диадок)</option>
                 <option value="UTF-8" <?= Option::get($module_id, 'file_encoding', 'windows-1251') === 'UTF-8' ? 'selected' : '' ?>>UTF-8</option>
             </select>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2"><b>Окружение</b> (тип портала: <?= htmlspecialcharsbx($portalLabel) ?>)</td>
+    </tr>
+    <tr>
+        <td>Активный runtime:</td>
+        <td>
+            <code><?= htmlspecialcharsbx($runtimeModuleId) ?></code>
+            <?php if (!$runtimeReady): ?>
+                <br><span style="color:#c00">На облаке требуется модуль vendor.xmldoc.cloud (переустановите vendor.xmldoc или установите вручную).</span>
+            <?php endif; ?>
+        </td>
+    </tr>
+    <tr>
+        <td>Режим CRM-адаптера:</td>
+        <td>
+            <?php $crmAdapter = Option::get($module_id, 'crm_adapter', 'auto'); ?>
+            <select name="crm_adapter">
+                <option value="auto" <?= $crmAdapter === 'auto' ? 'selected' : '' ?>>Авто</option>
+                <option value="cloud" <?= $crmAdapter === 'cloud' ? 'selected' : '' ?>>Облако</option>
+                <option value="onprem" <?= $crmAdapter === 'onprem' ? 'selected' : '' ?>>Коробка</option>
+            </select>
+            <br><small>Авто: облако определяется по bitrix24 / BX24_HOST_NAME</small>
+        </td>
+    </tr>
+    <tr>
+        <td>REST webhook (облако):</td>
+        <td>
+            <input type="text" name="cloud_rest_webhook" size="60" value="<?= htmlspecialcharsbx(Option::get($module_id, 'cloud_rest_webhook')) ?>">
+            <br><small>Входящий webhook для триггеров CRM, если внутренний API недоступен. Пример: https://portal.bitrix24.ru/rest/1/xxx/</small>
         </td>
     </tr>
 

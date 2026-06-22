@@ -49,7 +49,7 @@ class DataCollector
     }
 
     /** @return array<string, mixed> */
-    private function fetchEntity(string $entityType, int $entityId): array
+    protected function fetchEntity(string $entityType, int $entityId): array
     {
         if ($entityType === self::TYPE_DEAL) {
             return $this->fetchDeal($entityId);
@@ -63,7 +63,7 @@ class DataCollector
     }
 
     /** @return array<string, mixed> */
-    private function fetchDeal(int $dealId): array
+    protected function fetchDeal(int $dealId): array
     {
         $row = \CCrmDeal::GetByID($dealId, false);
         if (!$row) {
@@ -85,7 +85,7 @@ class DataCollector
     }
 
     /** @return array<string, mixed> */
-    private function fetchSmartInvoice(int $itemId): array
+    protected function fetchSmartInvoice(int $itemId): array
     {
         $typeId = Config::smartInvoiceTypeId();
         if ($typeId <= 0) {
@@ -416,7 +416,7 @@ class DataCollector
     }
 
     /** @param array<string, mixed> $row */
-    private function extractUserFields(array $row, array $keys): array
+    protected function extractUserFields(array $row, array $keys): array
     {
         $result = [];
         foreach ($keys as $key) {

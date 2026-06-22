@@ -69,4 +69,14 @@ final class ModuleConfig implements ConfigInterface
     {
         return dirname(__DIR__) . '/config/mapping/upd.php';
     }
+
+    public function crmAdapter(): string
+    {
+        return (string)Option::get(self::MODULE, 'crm_adapter', 'auto');
+    }
+
+    public function cloudRestWebhook(): string
+    {
+        return (string)Option::get(self::MODULE, 'cloud_rest_webhook', '');
+    }
 }

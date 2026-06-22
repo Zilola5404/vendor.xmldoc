@@ -69,4 +69,14 @@ final class TestConfig implements ConfigInterface
     {
         return $this->mappingPath;
     }
+
+    public function crmAdapter(): string
+    {
+        return 'auto';
+    }
+
+    public function cloudRestWebhook(): string
+    {
+        return '';
+    }
 }

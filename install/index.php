@@ -74,6 +74,7 @@ class vendor_xmldoc extends CModule
         $this->InstallTriggers();
         $this->InstallOptions();
         $this->InstallUserFields();
+        $this->installCloudCompanion();
 
         return true;
     }
@@ -87,6 +88,7 @@ class vendor_xmldoc extends CModule
         $this->InstallOptions();
         $this->InstallUserFields();
         $this->upgradeDocumentTable();
+        $this->installCloudCompanion();
 
         return true;
     }
@@ -279,6 +281,19 @@ class vendor_xmldoc extends CModule
             \Bitrix\Main\Config\Option::set($this->MODULE_ID, 'smart_invoice_type_id', '31');
         }
 
+        $this->ensureModuleAutoload();
+        if (
+            class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)
+            && \Vendor\Xmldoc\Environment\PortalEnvironment::isCloud()
+            && Loader::includeModule('vendor.xmldoc.cloud')
+            && class_exists(\Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::class)
+        ) {
+            $detected = \Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::detectFromCrm();
+            if ($detected > 0) {
+                \Bitrix\Main\Config\Option::set($this->MODULE_ID, 'smart_invoice_type_id', (string)$detected);
+            }
+        }
+
         return true;
     }
 
@@ -425,6 +440,43 @@ class vendor_xmldoc extends CModule
     private function isVersionD7()
     {
         return CheckVersion(ModuleManager::getVersion('main'), '17.0.0');
+    }
+
+    /** На облаке автоматически устанавливает companion-модуль vendor.xmldoc.cloud. */
+    private function installCloudCompanion(): void
+    {
+        $this->ensureModuleAutoload();
+
+        if (
+            !class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)
+            || !\Vendor\Xmldoc\Environment\PortalEnvironment::isCloud()
+        ) {
+            return;
+        }
+
+        if (ModuleManager::isModuleInstalled('vendor.xmldoc.cloud')) {
+            $cloud = CModule::CreateModuleObject('vendor.xmldoc.cloud');
+            if ($cloud !== null && method_exists($cloud, 'DoUpdate')) {
+                $cloud->DoUpdate();
+            }
+
+            return;
+        }
+
+        $cloudInstall = $_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xmldoc.cloud/install/index.php';
+        if (!is_file($cloudInstall)) {
+            return;
+        }
+
+        include_once $cloudInstall;
+        if (!class_exists('vendor_xmldoc_cloud')) {
+            return;
+        }
+
+        $cloud = new vendor_xmldoc_cloud();
+        if (method_exists($cloud, 'DoInstall')) {
+            $cloud->DoInstall();
+        }
     }
 
     /** Подключает autoload модуля (install/index.php не загружает include.php автоматически). */

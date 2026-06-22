@@ -26,4 +26,8 @@ interface ConfigInterface
     public function fileEncoding(): string;
 
     public function mappingPath(): string;
+
+    public function crmAdapter(): string;
+
+    public function cloudRestWebhook(): string;
 }

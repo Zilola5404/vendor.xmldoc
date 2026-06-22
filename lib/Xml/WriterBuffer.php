@@ -23,7 +23,8 @@ final class WriterBuffer
             $this->useXmlWriter = true;
             $this->xw = new \XMLWriter();
             $this->xw->openMemory();
-            $this->xw->setIndent(false);
+            $this->xw->setIndent(true);
+            $this->xw->setIndentString('  ');
 
             return;
         }
@@ -48,7 +49,8 @@ final class WriterBuffer
 
         $this->dom = new \DOMDocument($version, $encoding);
         $this->dom->encoding = $encoding;
-        $this->dom->formatOutput = false;
+        $this->dom->formatOutput = true;
+        $this->dom->preserveWhiteSpace = false;
     }
 
     public function startElement(string $name): void

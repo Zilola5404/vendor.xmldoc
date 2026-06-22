@@ -4,6 +4,7 @@ namespace Vendor\Xmldoc\Documents\Upd;
 
 use Vendor\Xmldoc\Config;
 use Vendor\Xmldoc\Contract\DocumentBuilderInterface;
+use Vendor\Xmldoc\Xml\XmlFormatter;
 
 /** Сборка и валидация УПД — реализация DocumentBuilderInterface */
 class UpdBuilder implements DocumentBuilderInterface
@@ -29,7 +30,7 @@ class UpdBuilder implements DocumentBuilderInterface
     /** @param array<string, mixed> $mapped */
     public function build(array $mapped): string
     {
-        return $this->writer->build($mapped);
+        return XmlFormatter::prettyPrint($this->writer->build($mapped));
     }
 
     /** @param array<string, mixed> $crmData — результат DataCollector::collect */

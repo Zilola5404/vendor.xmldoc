@@ -73,4 +73,14 @@ class Config
     {
         return self::i()->mappingPath();
     }
+
+    public static function crmAdapter(): string
+    {
+        return self::i()->crmAdapter();
+    }
+
+    public static function cloudRestWebhook(): string
+    {
+        return self::i()->cloudRestWebhook();
+    }
 }
