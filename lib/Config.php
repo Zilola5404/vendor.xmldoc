@@ -83,4 +83,14 @@ class Config
     {
         return self::i()->cloudRestWebhook();
     }
+
+    public static function xmlFormatVersion(): string
+    {
+        return self::i()->xmlFormatVersion();
+    }
+
+    public static function xsdSchemaRevision(): string
+    {
+        return self::i()->xsdSchemaRevision();
+    }
 }

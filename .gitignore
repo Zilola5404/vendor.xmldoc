@@ -10,4 +10,4 @@ tests/.phpunit.cache/
 
 # Тестовые XML в корне модуля (не для репозитория)
 /*.xml
-!config/schemas/*.xsd
+!config/schemas/**/*.xsd

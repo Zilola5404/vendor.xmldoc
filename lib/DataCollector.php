@@ -2,7 +2,6 @@
 
 namespace Vendor\Xmldoc;
 
-use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\BankDetailTable;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\RequisiteTable;
@@ -10,6 +9,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
+use Vendor\Xmldoc\Address\RequisiteAddressResolver;
+use Vendor\Xmldoc\Crm\ProductPriceNormalizer;
 
 /**
  * Сбор всех данных для генерации УПД из CRM.
@@ -38,11 +39,13 @@ class DataCollector
             $buyer = $this->dadata->enrich($buyer);
         }
 
+        $products = $this->fetchProducts($entityType, $entityId, (int)($entity['ENTITY_TYPE_ID'] ?? 0));
+
         return [
             'entity'    => $entity,
             'buyer'     => $buyer,
             'seller'    => $this->fetchSeller(),
-            'products'  => $this->fetchProducts($entityType, $entityId, (int)($entity['ENTITY_TYPE_ID'] ?? 0)),
+            'products'  => $products,
             'signatory' => $this->fetchSignatory(),
             'user_fields' => $entity['USER_FIELDS'] ?? [],
         ];
@@ -71,6 +74,8 @@ class DataCollector
         }
 
         $docDate = date('d.m.Y'); // по согласованию: дата генерации (позже — отдельное UF)
+        $opportunity = (float)($row['OPPORTUNITY'] ?? 0);
+        $taxValue = round((float)($row['TAX_VALUE'] ?? 0), 2);
 
         return [
             'ID'              => (int)$row['ID'],
@@ -80,6 +85,11 @@ class DataCollector
             'COMPANY_ID'      => (int)($row['COMPANY_ID'] ?? 0),
             'UF_UPD_NUMBER'   => (string)($row['UF_UPD_NUMBER'] ?? ''),
             'DOC_DATE'        => $docDate,
+            'OPPORTUNITY'     => $opportunity,
+            'TAX_VALUE'       => $taxValue,
+            'TOTAL_GROSS'     => round($opportunity, 2),
+            'TOTAL_NET'       => round($opportunity - $taxValue, 2),
+            'TOTAL_TAX'       => $taxValue,
             'USER_FIELDS'     => $this->extractUserFields($row, ['UF_UPD_NUMBER', 'UF_UPD_FILE']),
         ];
     }
@@ -139,8 +149,12 @@ class DataCollector
             ];
         }
 
-        $bank = $this->fetchBankDetails((int)$requisite['ID']);
-        $address = $this->fetchAddress(\CCrmOwnerType::Requisite, (int)$requisite['ID']);
+        $requisiteId = (int)($requisite['REQUISITE_ID'] ?? 0);
+        $bank = $this->fetchBankDetails($requisiteId);
+        $address = RequisiteAddressResolver::fetchLegalAddress(
+            \CCrmOwnerType::Requisite,
+            $requisiteId
+        );
 
         return array_merge($requisite, $bank, $address, [
             'COMPANY_ID' => $companyId,
@@ -163,7 +177,10 @@ class DataCollector
         }
 
         $seller = $this->normalizeRequisite($row);
-        $address = $this->fetchAddress(\CCrmOwnerType::Requisite, $requisiteId);
+        $address = RequisiteAddressResolver::fetchLegalAddress(
+            \CCrmOwnerType::Requisite,
+            $requisiteId
+        );
 
         return array_merge($seller, $address, $this->fetchBankDetails($requisiteId));
     }
@@ -241,69 +258,6 @@ class DataCollector
         ];
     }
 
-    /** @return array<string, mixed> */
-    private function fetchAddress(int $entityTypeId, int $entityId): array
-    {
-        $row = AddressTable::getList([
-            'filter' => [
-                '=ENTITY_TYPE_ID' => $entityTypeId,
-                '=ENTITY_ID'      => $entityId,
-            ],
-            'order'  => ['TYPE_ID' => 'ASC'],
-            'limit'  => 1,
-        ])->fetch();
-
-        if (!$row) {
-            return ['ADDRESS_FULL' => ''];
-        }
-
-        $parts = [
-            'ADDRESS_POSTAL_CODE' => (string)($row['POSTAL_CODE'] ?? ''),
-            'ADDRESS_REGION_CODE' => self::resolveRegionCode($row),
-            'ADDRESS_REGION'      => (string)($row['PROVINCE'] ?? $row['REGION'] ?? ''),
-            'ADDRESS_DISTRICT'    => (string)($row['REGION'] ?? ''),
-            'ADDRESS_CITY'        => (string)($row['CITY'] ?? ''),
-            'ADDRESS_STREET'      => (string)($row['ADDRESS_1'] ?? ''),
-            'ADDRESS_HOUSE'       => (string)($row['ADDRESS_2'] ?? ''),
-            'ADDRESS_BUILDING'    => (string)($row['BUILDING'] ?? ''),
-            'ADDRESS_FLAT'        => (string)($row['APARTMENT'] ?? ''),
-        ];
-
-        $parts['ADDRESS_FULL'] = $this->buildAddressString($parts, (string)($row['ADDRESS_FULL'] ?? ''));
-
-        return $parts;
-    }
-
-    /** @param array<string, mixed> $row */
-    private static function resolveRegionCode(array $row): string
-    {
-        $provinceCode = trim((string)($row['PROVINCE_CODE'] ?? ''));
-        if ($provinceCode !== '' && preg_match('/^(\d{2})/', $provinceCode, $m)) {
-            return $m[1];
-        }
-
-        return $provinceCode;
-    }
-
-    /** @param array<string, string> $parts */
-    private function buildAddressString(array $parts, string $fallback): string
-    {
-        if ($fallback !== '') {
-            return trim($fallback);
-        }
-
-        $chunks = array_filter([
-            $parts['ADDRESS_POSTAL_CODE'] ?? '',
-            $parts['ADDRESS_REGION'] ?? '',
-            $parts['ADDRESS_CITY'] ?? '',
-            $parts['ADDRESS_STREET'] ?? '',
-            $parts['ADDRESS_HOUSE'] ?? '',
-            $parts['ADDRESS_FLAT'] ?? '',
-        ]);
-
-        return implode(', ', $chunks);
-    }
-
     /** @return list<array<string, mixed>> */
     private function fetchProducts(string $entityType, int $entityId, int $entityTypeId): array
     {
@@ -324,23 +278,17 @@ class DataCollector
 
         while ($row = $rows->fetch()) {
             $line++;
-            $qty = (float)($row['QUANTITY'] ?? 0);
-            $price = (float)($row['PRICE'] ?? 0);
-            $taxRate = (float)($row['TAX_RATE'] ?? 0);
-
-            $sumNet = round($qty * $price, 2);
-            $taxSum = $taxRate > 0 ? round($sumNet * $taxRate / 100, 2) : 0.0;
-            $sumGross = round($sumNet + $taxSum, 2);
+            $amounts = ProductPriceNormalizer::normalize($row);
 
             $products[] = [
                 'LINE'         => $line,
                 'NAME'         => (string)($row['PRODUCT_NAME'] ?? ''),
-                'QUANTITY'     => $qty,
-                'PRICE'        => $price,
-                'SUM_NET'      => $sumNet,
-                'SUM_GROSS'    => $sumGross,
-                'TAX_RATE'     => $taxRate,
-                'TAX_SUM'      => $taxSum,
+                'QUANTITY'     => (float)($row['QUANTITY'] ?? 0),
+                'PRICE'        => $amounts['PRICE'],
+                'SUM_NET'      => $amounts['SUM_NET'],
+                'SUM_GROSS'    => $amounts['SUM_GROSS'],
+                'TAX_RATE'     => $amounts['TAX_RATE'],
+                'TAX_SUM'      => $amounts['TAX_SUM'],
                 'MEASURE'      => (string)($row['MEASURE_NAME'] ?? 'шт'),
                 'MEASURE_CODE' => $this->resolveOkeiCode((string)($row['MEASURE_NAME'] ?? ''), $row),
             ];

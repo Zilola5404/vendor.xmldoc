@@ -8,7 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Vendor\Xmldoc\DocumentTypeRegistry;
 
-Loader::includeModule('vendor.xmldoc');
+Loader::includeModule('vendor.xml');
 
 Loc::loadMessages(__FILE__);
 
@@ -21,7 +21,7 @@ $arActivityDescription = [
     'JSCLASS'     => 'BizProcActivity',
     'CATEGORY'    => [
         'ID'       => 'other',
-        'OWN_ID'   => 'vendor_xmldoc',
+        'OWN_ID'   => 'vendor_xml',
         'OWN_NAME' => Loc::getMessage('VENDOR_XMLDOC_BP_CATEGORY'),
     ],
     // XMLDOC-22: группа «Другие роботы»

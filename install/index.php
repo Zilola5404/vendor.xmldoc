@@ -10,9 +10,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 IncludeModuleLangFile(__FILE__);
 
-class vendor_xmldoc extends CModule
+class vendor_xml extends CModule
 {
-    public $MODULE_ID = 'vendor.xmldoc';
+    public $MODULE_ID = 'vendor.xml';
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
     public $MODULE_NAME;
@@ -74,7 +74,7 @@ class vendor_xmldoc extends CModule
         $this->InstallTriggers();
         $this->InstallOptions();
         $this->InstallUserFields();
-        $this->installCloudCompanion();
+        $this->applyInstallEnvironment();
 
         return true;
     }
@@ -88,7 +88,7 @@ class vendor_xmldoc extends CModule
         $this->InstallOptions();
         $this->InstallUserFields();
         $this->upgradeDocumentTable();
-        $this->installCloudCompanion();
+        $this->applyInstallEnvironment();
 
         return true;
     }
@@ -132,6 +132,7 @@ class vendor_xmldoc extends CModule
         $this->addColumnIfMissing('b_xmldoc_document', 'ENCODING', "ENCODING varchar(16) DEFAULT 'windows-1251'");
         $this->addColumnIfMissing('b_xmldoc_document', 'FILE_HASH', 'FILE_HASH varchar(64) DEFAULT NULL');
         $this->addColumnIfMissing('b_xmldoc_document', 'DOC_STATUS', "DOC_STATUS varchar(32) NOT NULL DEFAULT 'generated'");
+        $this->addColumnIfMissing('b_xmldoc_document', 'XML_FORMAT_VERSION', "XML_FORMAT_VERSION varchar(8) DEFAULT '5.03'");
     }
 
     private function addColumnIfMissing(string $table, string $column, string $ddl): void
@@ -266,11 +267,11 @@ class vendor_xmldoc extends CModule
         }
 
         include $defaultsFile;
-        if (empty($vendor_xmldoc_default_option) || !is_array($vendor_xmldoc_default_option)) {
+        if (empty($vendor_xml_default_option) || !is_array($vendor_xml_default_option)) {
             return true;
         }
 
-        foreach ($vendor_xmldoc_default_option as $name => $value) {
+        foreach ($vendor_xml_default_option as $name => $value) {
             $marker = '__XMLDOC_UNSET__';
             if (\Bitrix\Main\Config\Option::get($this->MODULE_ID, $name, $marker) === $marker) {
                 \Bitrix\Main\Config\Option::set($this->MODULE_ID, $name, (string)$value);
@@ -279,19 +280,6 @@ class vendor_xmldoc extends CModule
 
         if ((int)\Bitrix\Main\Config\Option::get($this->MODULE_ID, 'smart_invoice_type_id', '0') <= 0) {
             \Bitrix\Main\Config\Option::set($this->MODULE_ID, 'smart_invoice_type_id', '31');
-        }
-
-        $this->ensureModuleAutoload();
-        if (
-            class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)
-            && \Vendor\Xmldoc\Environment\PortalEnvironment::isCloud()
-            && Loader::includeModule('vendor.xmldoc.cloud')
-            && class_exists(\Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::class)
-        ) {
-            $detected = \Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::detectFromCrm();
-            if ($detected > 0) {
-                \Bitrix\Main\Config\Option::set($this->MODULE_ID, 'smart_invoice_type_id', (string)$detected);
-            }
         }
 
         return true;
@@ -380,7 +368,7 @@ class vendor_xmldoc extends CModule
             DeleteDirFilesEx('/bitrix/js/vendor/xmldoc');
         }
 
-        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xmldoc_generate.php';
+        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xml_generate.php';
         if (is_file($toolsFile)) {
             @unlink($toolsFile);
         }
@@ -394,7 +382,7 @@ class vendor_xmldoc extends CModule
             return true;
         }
 
-        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xmldoc', 'smart_invoice_type_id', '31');
+        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xml', 'smart_invoice_type_id', '31');
 
         if (class_exists(\Vendor\Xmldoc\Install\UserFieldInstaller::class)) {
             \Vendor\Xmldoc\Install\UserFieldInstaller::installAll($smartTypeId);
@@ -442,41 +430,16 @@ class vendor_xmldoc extends CModule
         return CheckVersion(ModuleManager::getVersion('main'), '17.0.0');
     }
 
-    /** На облаке автоматически устанавливает companion-модуль vendor.xmldoc.cloud. */
-    private function installCloudCompanion(): void
+    /** Определяет окружение (коробка/облако) и применяет профиль установки. */
+    private function applyInstallEnvironment(): void
     {
         $this->ensureModuleAutoload();
 
-        if (
-            !class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)
-            || !\Vendor\Xmldoc\Environment\PortalEnvironment::isCloud()
-        ) {
+        if (!class_exists(\Vendor\Xmldoc\Install\InstallEnvironment::class)) {
             return;
         }
 
-        if (ModuleManager::isModuleInstalled('vendor.xmldoc.cloud')) {
-            $cloud = CModule::CreateModuleObject('vendor.xmldoc.cloud');
-            if ($cloud !== null && method_exists($cloud, 'DoUpdate')) {
-                $cloud->DoUpdate();
-            }
-
-            return;
-        }
-
-        $cloudInstall = $_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xmldoc.cloud/install/index.php';
-        if (!is_file($cloudInstall)) {
-            return;
-        }
-
-        include_once $cloudInstall;
-        if (!class_exists('vendor_xmldoc_cloud')) {
-            return;
-        }
-
-        $cloud = new vendor_xmldoc_cloud();
-        if (method_exists($cloud, 'DoInstall')) {
-            $cloud->DoInstall();
-        }
+        \Vendor\Xmldoc\Install\InstallEnvironment::apply($this->MODULE_ID);
     }
 
     /** Подключает autoload модуля (install/index.php не загружает include.php автоматически). */

@@ -8,7 +8,7 @@ use Vendor\Xmldoc\Contract\ConfigInterface;
 /** Реализация настроек модуля из b_option. */
 final class ModuleConfig implements ConfigInterface
 {
-    private const MODULE = 'vendor.xmldoc';
+    private const MODULE = 'vendor.xml';
 
     public function dadataApiKey(): string
     {
@@ -78,5 +78,17 @@ final class ModuleConfig implements ConfigInterface
     public function cloudRestWebhook(): string
     {
         return (string)Option::get(self::MODULE, 'cloud_rest_webhook', '');
+    }
+
+    public function xmlFormatVersion(): string
+    {
+        $version = (string)Option::get(self::MODULE, 'xml_format_version', '5.03');
+
+        return in_array($version, ['5.02', '5.03'], true) ? $version : '5.03';
+    }
+
+    public function xsdSchemaRevision(): string
+    {
+        return (string)Option::get(self::MODULE, 'xsd_schema_revision', 'auto');
     }
 }

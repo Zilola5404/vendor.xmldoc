@@ -2,7 +2,7 @@
 /**
  * Ручная установка activity «Сформировать УПД (XML)» для БП/роботов CRM.
  * Запуск один раз из браузера (под администратором):
- * /local/modules/vendor.xmldoc/install/tools/install_activities.php
+ * /local/modules/vendor.xml/install/tools/install_activities.php
  *
  * После успеха удалите этот файл или ограничьте доступ.
  */
@@ -19,14 +19,14 @@ if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm('Только для администратора');
 }
 
-$moduleId = 'vendor.xmldoc';
-$source = $_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xmldoc/install/activities/xmldocgenerateupd';
+$moduleId = 'vendor.xml';
+$source = $_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xml/install/activities/xmldocgenerateupd';
 
 header('Content-Type: text/html; charset=utf-8');
 
 if (!is_dir($source)) {
     echo '<p style="color:red">Не найден исходник: ' . htmlspecialchars($source) . '</p>';
-    echo '<p>Сначала скопируйте модуль vendor.xmldoc на сервер.</p>';
+    echo '<p>Сначала скопируйте модуль vendor.xml на сервер.</p>';
     require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php';
     return;
 }

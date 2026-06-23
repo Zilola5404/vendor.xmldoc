@@ -71,13 +71,19 @@ abstract class AbstractGenerateRuntime implements GenerateRuntimeInterface
             $xml = (string)$result['xml'];
             $xmlCheck = $this->xmlValidator->validateDetailed($xml);
             if (!$xmlCheck['valid']) {
-                $details = $xmlCheck['errors'] !== []
+                $userMessage = (string)($xmlCheck['user_message'] ?? 'XML не прошёл XSD-проверку');
+                $logDetails = $xmlCheck['errors'] !== []
                     ? implode('; ', $xmlCheck['errors'])
                     : 'структура некорректна';
-                $msg = 'XML не прошёл проверку: ' . $details;
-                Logger::write($entityType, $entityId, Logger::STATUS_ERROR, $msg);
+                $schemaInfo = $xmlCheck['schema_path'] ?? '';
+                Logger::write(
+                    $entityType,
+                    $entityId,
+                    Logger::STATUS_ERROR,
+                    'XSD: ' . $logDetails . ($schemaInfo !== '' ? ' [' . basename($schemaInfo) . ']' : '')
+                );
 
-                return GenerateResult::fail([$msg]);
+                return GenerateResult::fail([$userMessage]);
             }
 
             $mapped = $result['mapped'] ?? [];

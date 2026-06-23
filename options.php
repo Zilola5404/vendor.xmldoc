@@ -2,15 +2,15 @@
 
 /**
  * Страница настроек модуля.
- * Открывается: Настройки → Настройки продукта → Настройки модулей → vendor.xmldoc
- * URL: /bitrix/admin/settings.php?mid=vendor.xmldoc&lang=ru
+ * Открывается: Настройки → Настройки продукта → Настройки модулей → vendor.xml
+ * URL: /bitrix/admin/settings.php?mid=vendor.xml&lang=ru
  */
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
-$module_id = 'vendor.xmldoc';
+$module_id = 'vendor.xml';
 
 Loader::includeModule('main');
 Loc::loadMessages(__FILE__);
@@ -28,6 +28,8 @@ $optionCodes = [
     'smart_invoice_type_id',
     'publish_timeline',
     'xsd_path',
+    'xml_format_version',
+    'xsd_schema_revision',
     'upd_function',
     'file_encoding',
     'crm_adapter',
@@ -35,18 +37,18 @@ $optionCodes = [
 ];
 
 $portalLabel = 'не определён';
-$runtimeModuleId = 'vendor.xmldoc';
+$runtimePathLabel = 'не определён';
 $runtimeReady = true;
-if (Loader::includeModule('vendor.xmldoc') && class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)) {
+if (Loader::includeModule('vendor.xml') && class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)) {
     $portalLabel = \Vendor\Xmldoc\Environment\PortalEnvironment::label();
-    $runtimeModuleId = \Vendor\Xmldoc\Environment\PortalEnvironment::activeRuntimeModuleId();
+    $runtimePathLabel = \Vendor\Xmldoc\Environment\PortalEnvironment::runtimePathLabel();
     $runtimeReady = \Vendor\Xmldoc\Environment\PortalEnvironment::isCloudRuntimeReady();
 }
 
 // Принудительное создание UF_UPD_* (сделки + СП «Счета»)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['install_uf'])) {
-    Loader::includeModule('vendor.xmldoc');
-    $module = CModule::CreateModuleObject('vendor.xmldoc');
+    Loader::includeModule('vendor.xml');
+    $module = CModule::CreateModuleObject('vendor.xml');
     if ($module !== null && method_exists($module, 'InstallUserFields')) {
         $module->InstallUserFields();
     }
@@ -64,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
         Option::set($module_id, $code, $value);
     }
 
-    Loader::includeModule('vendor.xmldoc');
-    $module = CModule::CreateModuleObject('vendor.xmldoc');
+    Loader::includeModule('vendor.xml');
+    $module = CModule::CreateModuleObject('vendor.xml');
     if ($module !== null && method_exists($module, 'InstallUserFields')) {
         $module->InstallUserFields();
     }
@@ -144,10 +146,32 @@ if (!empty($_GET['uf'])) {
         </td>
     </tr>
     <tr>
-        <td>Путь к XSD-схеме:</td>
+        <td>Версия формата XML (ВерсФорм):</td>
+        <td>
+            <?php $fmtVer = Option::get($module_id, 'xml_format_version', '5.03'); ?>
+            <select name="xml_format_version">
+                <option value="5.03" <?= $fmtVer === '5.03' ? 'selected' : '' ?>>5.03 (приказ ФНС №970, актуальная)</option>
+                <option value="5.02" <?= $fmtVer === '5.02' ? 'selected' : '' ?>>5.02</option>
+            </select>
+            <br><small>Схемы: config/schemas/{версия}/ON_NSCHFDOPPR_*.xsd</small>
+        </td>
+    </tr>
+    <tr>
+        <td>Ревизия XSD (5.03):</td>
+        <td>
+            <?php $xsdRev = Option::get($module_id, 'xsd_schema_revision', 'auto'); ?>
+            <select name="xsd_schema_revision">
+                <option value="auto" <?= $xsdRev === 'auto' ? 'selected' : '' ?>>Авто (последняя в config/schemas)</option>
+                <option value="03_05" <?= $xsdRev === '03_05' ? 'selected' : '' ?>>03_05 (с 01.08.2025)</option>
+                <option value="03_04" <?= $xsdRev === '03_04' ? 'selected' : '' ?>>03_04</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>Путь к XSD-схеме (override):</td>
         <td>
             <input type="text" name="xsd_path" size="60" value="<?= htmlspecialcharsbx(Option::get($module_id, 'xsd_path')) ?>">
-            <br><small>Абсолютный путь на сервере, например /home/bitrix/www/local/modules/vendor.xmldoc/config/schemas/upd.xsd</small>
+            <br><small>Пусто = автоматически из config/schemas. Абсолютный путь для ручной подмены.</small>
         </td>
     </tr>
     <tr>
@@ -172,9 +196,9 @@ if (!empty($_GET['uf'])) {
     <tr>
         <td>Активный runtime:</td>
         <td>
-            <code><?= htmlspecialcharsbx($runtimeModuleId) ?></code>
+            <code>vendor.xml</code> — <?= htmlspecialcharsbx($runtimePathLabel) ?>
             <?php if (!$runtimeReady): ?>
-                <br><span style="color:#c00">На облаке требуется модуль vendor.xmldoc.cloud (переустановите vendor.xmldoc или установите вручную).</span>
+                <br><span style="color:#c00">Cloud-runtime не найден. Обновите модуль vendor.xml до версии 2.0+.</span>
             <?php endif; ?>
         </td>
     </tr>
@@ -205,7 +229,7 @@ if (!empty($_GET['uf'])) {
 </form>
 
 <p style="margin-top:16px">
-    <a href="/bitrix/admin/vendor_xmldoc_documents.php?lang=<?= LANGUAGE_ID ?>">История документов УПД</a>
+    <a href="/bitrix/admin/vendor_xml_documents.php?lang=<?= LANGUAGE_ID ?>">История документов УПД</a>
     &nbsp;|&nbsp;
-    <a href="/bitrix/admin/vendor_xmldoc_log.php?lang=<?= LANGUAGE_ID ?>">Журнал генерации</a>
+    <a href="/bitrix/admin/vendor_xml_log.php?lang=<?= LANGUAGE_ID ?>">Журнал генерации</a>
 </p>

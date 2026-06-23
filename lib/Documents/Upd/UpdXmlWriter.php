@@ -3,6 +3,7 @@
 namespace Vendor\Xmldoc\Documents\Upd;
 
 use Vendor\Xmldoc\ModuleInfo;
+use Vendor\Xmldoc\Address\AddressComponentParser;
 use Vendor\Xmldoc\Xml\WriterBuffer;
 
 /**
@@ -22,7 +23,7 @@ class UpdXmlWriter
 
         $w->startElement('Файл');
         $w->writeAttribute('ИдФайл', $this->buildFileId($m));
-        $w->writeAttribute('ВерсФорм', '5.03');
+        $w->writeAttribute('ВерсФорм', \Vendor\Xmldoc\Config::xmlFormatVersion());
         $w->writeAttribute('ВерсПрог', ModuleInfo::programName());
 
         $w->startElement('Документ');
@@ -178,34 +179,44 @@ class UpdXmlWriter
             return;
         }
 
+        $regionCode = \Vendor\Xmldoc\Address\RegionCodeResolver::resolve(
+            (string)($m[$prefix . 'region_code'] ?? ''),
+            (string)($m[$prefix . 'region'] ?? ''),
+            (string)($m[$prefix . 'city'] ?? ''),
+            (string)($m[$prefix . 'index'] ?? ''),
+            (string)($m[$role . '_address'] ?? '')
+        );
+
+        if ($regionCode === '') {
+            return;
+        }
+
         $w->startElement('Адрес');
         $w->startElement('АдрРФ');
+        $w->writeAttribute('КодРегион', $regionCode);
         if (!empty($m[$prefix . 'index'])) {
-            $w->writeAttribute('Индекс', (string)$m[$prefix . 'index']);
-        }
-        if (!empty($m[$prefix . 'region_code'])) {
-            $w->writeAttribute('КодРегион', (string)$m[$prefix . 'region_code']);
+            $w->writeAttribute('Индекс', AddressComponentParser::truncate((string)$m[$prefix . 'index'], 6));
         }
         if (!empty($m[$prefix . 'region'])) {
-            $w->writeAttribute('НаимРегион', (string)$m[$prefix . 'region']);
+            $w->writeAttribute('НаимРегион', AddressComponentParser::truncate((string)$m[$prefix . 'region'], 51));
         }
         if (!empty($m[$prefix . 'district'])) {
-            $w->writeAttribute('Район', (string)$m[$prefix . 'district']);
+            $w->writeAttribute('Район', AddressComponentParser::truncate((string)$m[$prefix . 'district'], 255));
         }
         if (!empty($m[$prefix . 'city'])) {
-            $w->writeAttribute('Город', (string)$m[$prefix . 'city']);
+            $w->writeAttribute('Город', AddressComponentParser::truncate((string)$m[$prefix . 'city'], 255));
         }
         if (!empty($m[$prefix . 'street'])) {
-            $w->writeAttribute('Улица', (string)$m[$prefix . 'street']);
+            $w->writeAttribute('Улица', AddressComponentParser::truncate((string)$m[$prefix . 'street'], 255));
         }
         if (!empty($m[$prefix . 'house'])) {
-            $w->writeAttribute('Дом', (string)$m[$prefix . 'house']);
+            $w->writeAttribute('Дом', AddressComponentParser::truncate((string)$m[$prefix . 'house'], 50));
         }
         if (!empty($m[$prefix . 'building'])) {
-            $w->writeAttribute('Корпус', (string)$m[$prefix . 'building']);
+            $w->writeAttribute('Корпус', AddressComponentParser::truncate((string)$m[$prefix . 'building'], 50));
         }
         if (!empty($m[$prefix . 'flat'])) {
-            $w->writeAttribute('Кварт', (string)$m[$prefix . 'flat']);
+            $w->writeAttribute('Кварт', AddressComponentParser::truncate((string)$m[$prefix . 'flat'], 50));
         }
         $w->endElement();
         $w->endElement();

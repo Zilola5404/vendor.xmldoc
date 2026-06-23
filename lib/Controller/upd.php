@@ -12,7 +12,7 @@ use Vendor\Xmldoc\Dto\EntityContextDto;
 use Vendor\Xmldoc\Dto\GenerateRequestDto;
 use Vendor\Xmldoc\GenerateService;
 
-/** AJAX: vendor.xmldoc:upd.generate */
+/** AJAX: vendor.xml:upd.generate */
 class Upd extends Controller
 {
     public function configureActions(): array
@@ -29,8 +29,8 @@ class Upd extends Controller
 
     public function generateAction(string $entityType, int $entityId): array
     {
-        if (!Loader::includeModule('vendor.xmldoc') || !Loader::includeModule('crm')) {
-            return GenerateResult::fail(['Модуль vendor.xmldoc или CRM не установлен'])->toArray();
+        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
+            return GenerateResult::fail(['Модуль vendor.xml или CRM не установлен'])->toArray();
         }
 
         if (!CrmPermissions::canGenerate($entityType, $entityId)) {

@@ -32,11 +32,14 @@ class DocumentRegistry
         int $version,
         string $encoding,
         ?string $fileHash = null,
-        string $docStatus = DocumentStatus::GENERATED
+        string $docStatus = DocumentStatus::GENERATED,
+        ?string $xmlFormatVersion = null
     ): void {
         if (!in_array($docStatus, DocumentStatus::all(), true)) {
             $docStatus = DocumentStatus::GENERATED;
         }
+
+        $xmlFormatVersion = $xmlFormatVersion ?? Config::xmlFormatVersion();
 
         try {
             $connection = Application::getConnection();
@@ -45,8 +48,8 @@ class DocumentRegistry
 
             $connection->queryExecute(
                 "INSERT INTO b_xmldoc_document
-                    (ENTITY_TYPE, ENTITY_ID, DOC_NUMBER, FILE_NAME, FILE_ID, VERSION, ENCODING, FILE_HASH, DOC_STATUS, CREATED_AT)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, {$createdAt})",
+                    (ENTITY_TYPE, ENTITY_ID, DOC_NUMBER, FILE_NAME, FILE_ID, VERSION, ENCODING, FILE_HASH, DOC_STATUS, XML_FORMAT_VERSION, CREATED_AT)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, {$createdAt})",
                 [
                     $entityType,
                     $entityId,
@@ -57,6 +60,7 @@ class DocumentRegistry
                     $encoding,
                     $fileHash,
                     $docStatus,
+                    $xmlFormatVersion,
                 ]
             );
         } catch (\Throwable) {

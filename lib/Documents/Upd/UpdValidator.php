@@ -2,6 +2,7 @@
 
 namespace Vendor\Xmldoc\Documents\Upd;
 
+use Vendor\Xmldoc\Address\RegionCodeResolver;
 use Vendor\Xmldoc\ValidationMessages;
 
 /** Проверка обязательных полей и арифметики сумм перед генерацией XML */
@@ -52,7 +53,52 @@ class UpdValidator
             $errors = array_merge($errors, $this->validateProductSums($mapped));
         }
 
+        $errors = array_merge($errors, $this->validateRegionCodes($mapped));
+
         return array_values(array_unique($errors));
+    }
+
+    /**
+     * @param array<string, mixed> $mapped
+     * @return string[]
+     */
+    private function validateRegionCodes(array $mapped): array
+    {
+        $errors = [];
+
+        foreach (['buyer' => 'buyer_region_code', 'seller' => 'seller_region_code'] as $role => $messageKey) {
+            if (!$this->hasAddressBlock($mapped, $role)) {
+                continue;
+            }
+
+            $prefix = $role . '_addr_';
+            $code = RegionCodeResolver::resolve(
+                (string)($mapped[$prefix . 'region_code'] ?? ''),
+                (string)($mapped[$prefix . 'region'] ?? ''),
+                (string)($mapped[$prefix . 'city'] ?? ''),
+                (string)($mapped[$prefix . 'index'] ?? ''),
+                (string)($mapped[$role . '_address'] ?? '')
+            );
+
+            if ($code === '') {
+                $errors[] = ValidationMessages::get($messageKey);
+            }
+        }
+
+        return $errors;
+    }
+
+    /** @param array<string, mixed> $mapped */
+    private function hasAddressBlock(array $mapped, string $role): bool
+    {
+        $prefix = $role . '_addr_';
+        foreach (['index', 'region', 'city', 'street', 'house', 'flat'] as $part) {
+            if (!empty($mapped[$prefix . $part])) {
+                return true;
+            }
+        }
+
+        return !empty($mapped[$role . '_address']);
     }
 
     /**
@@ -83,18 +129,11 @@ class UpdValidator
                 $errors[] = ValidationMessages::productPrice($line, $productName);
             }
 
-            $expectedNet = round($qty * $price, 2);
             $actualNet = round((float)($row['SUM_NET'] ?? 0), 2);
-            $expectedTax = $taxRate > 0 ? round($expectedNet * $taxRate / 100, 2) : 0.0;
             $actualTax = round((float)($row['TAX_SUM'] ?? 0), 2);
-            $expectedGross = round($expectedNet + $expectedTax, 2);
             $actualGross = round((float)($row['SUM_GROSS'] ?? 0), 2);
 
-            if (
-                !$this->moneyEquals($expectedNet, $actualNet)
-                || !$this->moneyEquals($expectedTax, $actualTax)
-                || !$this->moneyEquals($expectedGross, $actualGross)
-            ) {
+            if (!$this->isProductSumConsistent($qty, $price, $taxRate, $actualNet, $actualTax, $actualGross)) {
                 $hasSumError = true;
                 $errors[] = ValidationMessages::productSumMismatch($line, $productName);
             }
@@ -115,16 +154,60 @@ class UpdValidator
 
         if (
             !$hasSumError
-            && (
-                !$this->moneyEquals($sumNet, $totalNet)
-                || !$this->moneyEquals($sumTax, $totalTax)
-                || !$this->moneyEquals($sumGross, $totalGross)
-            )
+            && empty($mapped['totals_from_deal'])
+            && !$this->totalsConsistent($sumNet, $sumTax, $sumGross, $totalNet, $totalTax, $totalGross)
         ) {
             $errors[] = ValidationMessages::productTotalsMismatch();
         }
 
         return $errors;
+    }
+
+    private function isProductSumConsistent(
+        float $qty,
+        float $price,
+        float $taxRate,
+        float $net,
+        float $tax,
+        float $gross,
+    ): bool {
+        if (!$this->moneyEquals($net + $tax, $gross)) {
+            return false;
+        }
+
+        if ($taxRate <= 0) {
+            return $this->moneyEquals(round($qty * $price, 2), $net);
+        }
+
+        if (!$this->moneyEquals(round($gross - $net, 2), $tax)) {
+            return false;
+        }
+
+        if ($qty <= 0) {
+            return true;
+        }
+
+        $lineDrift = abs(round($qty * $price, 2) - $net);
+        $maxDrift = max(self::MONEY_EPS, 0.02 * $qty) + self::MONEY_EPS;
+
+        return $lineDrift <= $maxDrift;
+    }
+
+    private function totalsConsistent(
+        float $sumNet,
+        float $sumTax,
+        float $sumGross,
+        float $totalNet,
+        float $totalTax,
+        float $totalGross,
+    ): bool {
+        $netOk = $this->moneyEquals($sumNet, $totalNet)
+            || abs($sumNet - $totalNet) <= max(1.0, 0.01 * max($totalNet, 1.0));
+        $taxOk = $this->moneyEquals($sumTax, $totalTax)
+            || abs($sumTax - $totalTax) <= max(1.0, 0.01 * max($totalTax, 1.0));
+        $grossOk = $this->moneyEquals($sumGross, $totalGross);
+
+        return $netOk && $taxOk && $grossOk;
     }
 
     private function moneyEquals(float $a, float $b): bool

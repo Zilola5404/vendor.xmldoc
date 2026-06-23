@@ -30,10 +30,10 @@ function xmldoc_tools_send_json(array $payload): never
 }
 
 try {
-    if (!Loader::includeModule('vendor.xmldoc')) {
+    if (!Loader::includeModule('vendor.xml')) {
         xmldoc_tools_send_json([
             'success' => false,
-            'message' => 'Модуль vendor.xmldoc не установлен',
+            'message' => 'Модуль vendor.xml не установлен',
         ]);
     }
 

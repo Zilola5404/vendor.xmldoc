@@ -86,6 +86,128 @@ final class UpdValidatorTest extends TestCase
         $this->assertNotEmpty($errors);
     }
 
+    public function testGrossDerivedProductSumsAccepted(): void
+    {
+        $validator = new UpdValidator(new UpdMapper());
+        $errors = $validator->validate([
+            'buyer_name' => 'Покупатель',
+            'buyer_inn' => '7700000000',
+            'buyer_kpp' => '770001001',
+            'buyer_address' => 'Москва',
+            'seller_name' => 'Продавец',
+            'seller_inn' => '7800000000',
+            'seller_address' => 'СПб',
+            'signatory_name' => 'Иванов Иван',
+            'signatory_position' => 'Директор',
+            'doc_number' => '1',
+            'doc_date' => '01.01.2026',
+            'products' => [
+                [
+                    'LINE' => 1,
+                    'NAME' => 'Форсунка',
+                    'QUANTITY' => 4,
+                    'PRICE' => 10324.48,
+                    'SUM_NET' => 41297.90,
+                    'TAX_RATE' => 22,
+                    'TAX_SUM' => 9085.54,
+                    'SUM_GROSS' => 50383.44,
+                ],
+            ],
+            'totals' => [
+                'SUM_NET' => 41297.90,
+                'TAX_SUM' => 9085.54,
+                'SUM_GROSS' => 50383.44,
+            ],
+        ]);
+
+        $this->assertSame([], $errors);
+    }
+
+    public function testReconciledLastLinePassesValidation(): void
+    {
+        $validator = new UpdValidator(new UpdMapper());
+        $errors = $validator->validate([
+            'buyer_name' => 'Покупатель',
+            'buyer_inn' => '7700000000',
+            'buyer_kpp' => '770001001',
+            'buyer_address' => 'Москва',
+            'seller_name' => 'Продавец',
+            'seller_inn' => '7800000000',
+            'seller_address' => 'СПб',
+            'signatory_name' => 'Иванов Иван',
+            'signatory_position' => 'Директор',
+            'doc_number' => '1',
+            'doc_date' => '01.01.2026',
+            'products' => [
+                [
+                    'LINE' => 1,
+                    'NAME' => 'Товар',
+                    'QUANTITY' => 4,
+                    'PRICE' => 10324.48,
+                    'SUM_NET' => 41297.90,
+                    'TAX_RATE' => 22,
+                    'TAX_SUM' => 9085.54,
+                    'SUM_GROSS' => 50383.44,
+                ],
+                [
+                    'LINE' => 2,
+                    'NAME' => 'Крышка цепи ГРМ Cummins ISF2.8 Е-5 Оригинал № 5363383 | Foton',
+                    'QUANTITY' => 1,
+                    'PRICE' => 1200.01,
+                    'SUM_NET' => 1200.01,
+                    'TAX_RATE' => 22,
+                    'TAX_SUM' => 264.00,
+                    'SUM_GROSS' => 1464.01,
+                ],
+            ],
+            'totals' => [
+                'SUM_NET' => 42497.91,
+                'TAX_SUM' => 9349.54,
+                'SUM_GROSS' => 51847.45,
+            ],
+        ]);
+
+        $this->assertSame([], $errors);
+    }
+
+    public function testDealTotalsDoNotRequireLineSumMatch(): void
+    {
+        $validator = new UpdValidator(new UpdMapper());
+        $errors = $validator->validate([
+            'buyer_name' => 'Покупатель',
+            'buyer_inn' => '7700000000',
+            'buyer_kpp' => '770001001',
+            'buyer_address' => 'Москва',
+            'seller_name' => 'Продавец',
+            'seller_inn' => '7800000000',
+            'seller_address' => 'СПб',
+            'signatory_name' => 'Иванов',
+            'signatory_position' => 'Директор',
+            'doc_number' => '1',
+            'doc_date' => '01.01.2026',
+            'totals_from_deal' => true,
+            'products' => [
+                [
+                    'LINE' => 1,
+                    'NAME' => 'Товар',
+                    'QUANTITY' => 1,
+                    'PRICE' => 100.0,
+                    'SUM_NET' => 100.0,
+                    'TAX_RATE' => 22,
+                    'TAX_SUM' => 22.0,
+                    'SUM_GROSS' => 122.0,
+                ],
+            ],
+            'totals' => [
+                'SUM_NET' => 424914.96,
+                'TAX_SUM' => 93481.32,
+                'SUM_GROSS' => 518396.28,
+            ],
+        ]);
+
+        $this->assertSame([], $errors);
+    }
+
     /** @return array<string, mixed> */
     private function sampleCrmData(): array
     {

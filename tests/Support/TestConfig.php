@@ -79,4 +79,14 @@ final class TestConfig implements ConfigInterface
     {
         return '';
     }
+
+    public function xmlFormatVersion(): string
+    {
+        return '5.03';
+    }
+
+    public function xsdSchemaRevision(): string
+    {
+        return 'auto';
+    }
 }

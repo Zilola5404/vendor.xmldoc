@@ -19,7 +19,7 @@ IncludeModuleLangFile(__FILE__);
 if (class_exists(\Bitrix\Bizproc\Activity\BaseActivity::class)) {
     abstract class XmldocGenerateUpdBase extends \Bitrix\Bizproc\Activity\BaseActivity
     {
-        protected static $requiredModules = ['vendor.xmldoc', 'crm'];
+        protected static $requiredModules = ['vendor.xml', 'crm'];
     }
 } else {
     abstract class XmldocGenerateUpdBase extends CBPActivity
@@ -140,8 +140,8 @@ class CBPXmldocGenerateUpd extends XmldocGenerateUpdBase
 
     private function executeGeneration(): int
     {
-        if (!\Bitrix\Main\Loader::includeModule('vendor.xmldoc') || !\Bitrix\Main\Loader::includeModule('crm')) {
-            return $this->fail('Модуль vendor.xmldoc или CRM не установлен', [], true);
+        if (!\Bitrix\Main\Loader::includeModule('vendor.xml') || !\Bitrix\Main\Loader::includeModule('crm')) {
+            return $this->fail('Модуль vendor.xml или CRM не установлен', [], true);
         }
 
         try {

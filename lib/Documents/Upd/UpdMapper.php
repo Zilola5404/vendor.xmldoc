@@ -2,6 +2,8 @@
 
 namespace Vendor\Xmldoc\Documents\Upd;
 
+use Vendor\Xmldoc\Address\RegionCodeResolver;
+use Vendor\Xmldoc\Address\AddressComponentParser;
 use Vendor\Xmldoc\Config;
 
 /** Преобразует собранные данные CRM в плоскую структуру для XmlWriter */
@@ -28,13 +30,17 @@ class UpdMapper
         $docNumber = $this->resolveDocNumber($entity);
         $docDate = (string)($entity['DOC_DATE'] ?? date('d.m.Y'));
 
+        $dealGross = round((float)($entity['TOTAL_GROSS'] ?? 0), 2);
+        $totalsFromDeal = $dealGross > 0;
+
         $mapped = [
             'doc_number'   => $docNumber,
             'doc_date'     => $docDate,
             'doc_function' => Config::updFunction(),
             'products'     => $products,
             'products_text'=> $this->buildProductsText($products),
-            'totals'       => $this->calcTotals($products),
+            'totals'       => $this->calcTotals($products, $entity),
+            'totals_from_deal' => $totalsFromDeal,
             '_raw'         => $data,
         ];
 
@@ -69,8 +75,28 @@ class UpdMapper
      */
     private function mapParty(array $party, string $prefix): array
     {
+        $party = array_merge($party, AddressComponentParser::normalize([
+            'ADDRESS_POSTAL_CODE' => (string)($party['ADDRESS_POSTAL_CODE'] ?? ''),
+            'ADDRESS_REGION'      => (string)($party['ADDRESS_REGION'] ?? ''),
+            'ADDRESS_DISTRICT'    => (string)($party['ADDRESS_DISTRICT'] ?? ''),
+            'ADDRESS_CITY'        => (string)($party['ADDRESS_CITY'] ?? ''),
+            'ADDRESS_STREET'      => (string)($party['ADDRESS_STREET'] ?? ''),
+            'ADDRESS_HOUSE'       => (string)($party['ADDRESS_HOUSE'] ?? ''),
+            'ADDRESS_BUILDING'    => (string)($party['ADDRESS_BUILDING'] ?? ''),
+            'ADDRESS_FLAT'        => (string)($party['ADDRESS_FLAT'] ?? ''),
+            'ADDRESS_FULL'        => (string)($party['ADDRESS_FULL'] ?? ''),
+        ]));
+
         $inn = (string)($party['INN'] ?? '');
         $isIp = !empty($party['IS_IP']) || strlen(preg_replace('/\D/', '', $inn)) === 12;
+
+        $regionCode = RegionCodeResolver::resolve(
+            (string)($party['ADDRESS_REGION_CODE'] ?? ''),
+            (string)($party['ADDRESS_REGION'] ?? ''),
+            (string)($party['ADDRESS_CITY'] ?? ''),
+            (string)($party['ADDRESS_POSTAL_CODE'] ?? ''),
+            (string)($party['ADDRESS_FULL'] ?? '')
+        );
 
         return [
             $prefix . '_name'          => (string)($party['NAME'] ?? ''),
@@ -84,7 +110,7 @@ class UpdMapper
             $prefix . '_middle_name'   => (string)($party['MIDDLE_NAME'] ?? ''),
             $prefix . '_address'       => (string)($party['ADDRESS_FULL'] ?? ''),
             $prefix . '_addr_index'     => (string)($party['ADDRESS_POSTAL_CODE'] ?? ''),
-            $prefix . '_addr_region_code' => (string)($party['ADDRESS_REGION_CODE'] ?? ''),
+            $prefix . '_addr_region_code' => $regionCode,
             $prefix . '_addr_region'    => (string)($party['ADDRESS_REGION'] ?? ''),
             $prefix . '_addr_district'  => (string)($party['ADDRESS_DISTRICT'] ?? ''),
             $prefix . '_addr_city'      => (string)($party['ADDRESS_CITY'] ?? ''),
@@ -135,7 +161,7 @@ class UpdMapper
     }
 
     /** @param list<array<string, mixed>> $products */
-    private function calcTotals(array $products): array
+    private function calcTotals(array $products, array $entity = []): array
     {
         $net = 0.0;
         $tax = 0.0;
@@ -147,11 +173,28 @@ class UpdMapper
             $gross += (float)($p['SUM_GROSS'] ?? 0);
         }
 
-        return [
+        $totals = [
             'SUM_NET'   => round($net, 2),
             'TAX_SUM'   => round($tax, 2),
             'SUM_GROSS' => round($gross, 2),
         ];
+
+        $dealGross = round((float)($entity['TOTAL_GROSS'] ?? 0), 2);
+        if ($dealGross > 0) {
+            $totals['SUM_GROSS'] = $dealGross;
+            $dealNet = round((float)($entity['TOTAL_NET'] ?? 0), 2);
+            $dealTax = round((float)($entity['TOTAL_TAX'] ?? 0), 2);
+            if ($dealNet > 0) {
+                $totals['SUM_NET'] = $dealNet;
+            }
+            if ($dealTax > 0) {
+                $totals['TAX_SUM'] = $dealTax;
+            } elseif ($dealNet > 0) {
+                $totals['TAX_SUM'] = round($dealGross - $dealNet, 2);
+            }
+        }
+
+        return $totals;
     }
 
     /** @return array<string, array<string, mixed>> */

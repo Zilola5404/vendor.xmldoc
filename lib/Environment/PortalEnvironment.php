@@ -4,12 +4,14 @@ namespace Vendor\Xmldoc\Environment;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
+use Vendor\Xmldoc\Cloud\CloudGenerateRuntime;
 use Vendor\Xmldoc\Config;
+use Vendor\Xmldoc\Install\InstallEnvironment;
 
 /** Определение типа портала: облако / коробка. */
 final class PortalEnvironment
 {
-    private const MODULE = 'vendor.xmldoc';
+    private const MODULE = 'vendor.xml';
 
     public static function crmAdapterMode(): string
     {
@@ -57,7 +59,7 @@ final class PortalEnvironment
 
     public static function activeRuntimeModuleId(): string
     {
-        return self::isCloud() ? 'vendor.xmldoc.cloud' : 'vendor.xmldoc';
+        return self::MODULE;
     }
 
     public static function isCloudRuntimeReady(): bool
@@ -66,6 +68,11 @@ final class PortalEnvironment
             return true;
         }
 
-        return \Bitrix\Main\ModuleManager::isModuleInstalled('vendor.xmldoc.cloud');
+        return class_exists(CloudGenerateRuntime::class);
+    }
+
+    public static function runtimePathLabel(): string
+    {
+        return InstallEnvironment::runtimeLabel(self::MODULE);
     }
 }

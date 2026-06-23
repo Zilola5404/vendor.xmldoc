@@ -2,29 +2,23 @@
 
 namespace Vendor\Xmldoc\Runtime;
 
-use Bitrix\Main\Loader;
+use Vendor\Xmldoc\Cloud\CloudGenerateRuntime;
 use Vendor\Xmldoc\Contract\GenerateRuntimeInterface;
 use Vendor\Xmldoc\Environment\PortalEnvironment;
 
-/** Выбор runtime по типу портала: коробка → Box, облако → vendor.xmldoc.cloud. */
+/** Выбор runtime по типу портала внутри одного модуля vendor.xml. */
 final class RuntimeFactory
 {
     public static function create(): GenerateRuntimeInterface
     {
         if (PortalEnvironment::isCloud()) {
-            if (!Loader::includeModule('vendor.xmldoc.cloud')) {
+            if (!class_exists(CloudGenerateRuntime::class)) {
                 throw new \RuntimeException(
-                    'Облачный портал Bitrix24: установите модуль «vendor.xmldoc.cloud» '
-                    . '(Настройки → Настройки модулей).'
+                    'Облачный runtime не найден. Обновите модуль vendor.xml до актуальной версии.'
                 );
             }
 
-            $class = '\\Vendor\\Xmldoc\\Cloud\\CloudGenerateRuntime';
-            if (!class_exists($class)) {
-                throw new \RuntimeException('Модуль vendor.xmldoc.cloud установлен, но runtime не найден.');
-            }
-
-            return new $class();
+            return new CloudGenerateRuntime();
         }
 
         return new BoxGenerateRuntime();
@@ -32,6 +26,6 @@ final class RuntimeFactory
 
     public static function runtimeModuleId(): string
     {
-        return PortalEnvironment::isCloud() ? 'vendor.xmldoc.cloud' : 'vendor.xmldoc';
+        return 'vendor.xml';
     }
 }

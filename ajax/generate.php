@@ -30,7 +30,7 @@ function xmldoc_send_json(array $payload): never
 }
 
 try {
-    Loader::includeModule('vendor.xmldoc');
+    Loader::includeModule('vendor.xml');
     xmldoc_send_json(GenerateEndpoint::execute());
 } catch (\Throwable $e) {
     xmldoc_send_json([

@@ -25,6 +25,6 @@ final class ModuleInfo
 
     public static function programName(): string
     {
-        return 'vendor.xmldoc ' . self::version();
+        return 'vendor.xml ' . self::version();
     }
 }

@@ -31,7 +31,7 @@ class Ui
             return;
         }
 
-        if (!Loader::includeModule('vendor.xmldoc') || !Loader::includeModule('crm')) {
+        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
             return;
         }
 
@@ -72,29 +72,29 @@ class Ui
         $version = self::moduleVersion();
 
         // Всегда из исходников модуля — актуальный JS без кеша /bitrix/js/
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xmldoc/install/js/generate.js')) {
-            return $siteDir . 'local/modules/vendor.xmldoc/install/js/generate.js?v=' . rawurlencode($version);
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xml/install/js/generate.js')) {
+            return $siteDir . 'local/modules/vendor.xml/install/js/generate.js?v=' . rawurlencode($version);
         }
 
         if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/vendor/xmldoc/generate.js')) {
             return $siteDir . 'bitrix/js/vendor/xmldoc/generate.js?v=' . rawurlencode($version);
         }
 
-        return $siteDir . 'local/modules/vendor.xmldoc/install/js/generate.js?v=' . rawurlencode($version);
+        return $siteDir . 'local/modules/vendor.xml/install/js/generate.js?v=' . rawurlencode($version);
     }
 
     private static function resolveAjaxUrl(): string
     {
         $siteDir = self::siteDir();
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xmldoc/ajax/generate.php')) {
-            return $siteDir . 'local/modules/vendor.xmldoc/ajax/generate.php';
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xml/ajax/generate.php')) {
+            return $siteDir . 'local/modules/vendor.xml/ajax/generate.php';
         }
 
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xmldoc_generate.php')) {
-            return $siteDir . 'bitrix/tools/vendor_xmldoc_generate.php';
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xml_generate.php')) {
+            return $siteDir . 'bitrix/tools/vendor_xml_generate.php';
         }
 
-        return $siteDir . 'local/modules/vendor.xmldoc/ajax/generate.php';
+        return $siteDir . 'local/modules/vendor.xml/ajax/generate.php';
     }
 
     private static function siteDir(): string

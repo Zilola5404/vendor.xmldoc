@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS b_xmldoc_document (
     ENCODING varchar(16) DEFAULT 'windows-1251',
     FILE_HASH varchar(64) DEFAULT NULL,
     DOC_STATUS varchar(32) NOT NULL DEFAULT 'generated',
+    XML_FORMAT_VERSION varchar(8) DEFAULT '5.03',
     CREATED_AT datetime NOT NULL,
     PRIMARY KEY (ID),
     KEY IX_XMLDOC_DOC_ENTITY (ENTITY_TYPE, ENTITY_ID),

@@ -1,11 +1,11 @@
-# vendor.xmldoc — генерация XML УПД из Битрикс24
+# vendor.xml — генерация XML УПД из Битрикс24
 
 D7-модуль для коробочного Битрикс24.
 
 ## Быстрый старт (v1.4.0)
 
 1. Установите модуль → **Обновить** до 1.4.0
-2. Настройки: `/bitrix/admin/settings.php?mid=vendor.xmldoc` (entityTypeId СП = 31 по умолчанию)
+2. Настройки: `/bitrix/admin/settings.php?mid=vendor.xml` (entityTypeId СП = 31 по умолчанию)
 3. Заполните **Мои реквизиты** и реквизиты компании-покупателя
 4. Откройте сделку → **Сформировать УПД**
 5. Робот CRM: действие **Сформировать УПД (XML)**
@@ -13,7 +13,7 @@ D7-модуль для коробочного Битрикс24.
 
 ## Установка
 
-1. Скопируйте папку `local/modules/vendor.xmldoc` в корень сайта Битрикс.
+1. Скопируйте папку `local/modules/vendor.xml` в корень сайта Битрикс.
 2. Откройте в админке: **Marketplace → Установленные решения**  
    или прямой URL: `/bitrix/admin/partner_modules.php?lang=ru`
 3. Найдите модуль **«Генерация XML (УПД)»** в списке локальных решений.
@@ -23,9 +23,9 @@ D7-модуль для коробочного Битрикс24.
 
 После установки модуль появится в:
 
-**Настройки → Настройки продукта → Настройки модулей → vendor.xmldoc**
+**Настройки → Настройки продукта → Настройки модулей → vendor.xml**
 
-Прямой URL: `/bitrix/admin/settings.php?mid=vendor.xmldoc&lang=ru`
+Прямой URL: `/bitrix/admin/settings.php?mid=vendor.xml&lang=ru`
 
 Заполните:
 
@@ -37,7 +37,7 @@ D7-модуль для коробочного Битрикс24.
 
 ## Если модуль не виден в списке
 
-1. Проверьте путь: `/{корень сайта}/local/modules/vendor.xmldoc/install/index.php`
+1. Проверьте путь: `/{корень сайта}/local/modules/vendor.xml/install/index.php`
 2. Проверьте права на папку — веб-сервер должен читать файлы.
 3. Убедитесь, что установлен модуль **CRM**.
 4. Очистите кеш: **Настройки → Производительность → Очистить кеш**.
@@ -59,7 +59,7 @@ Activity возвращает: `Success`, `FileId`, `FileName`, `Version`, `Mess
 ### PHP-код (запасной способ)
 
 ```php
-\Bitrix\Main\Loader::includeModule('vendor.xmldoc');
+\Bitrix\Main\Loader::includeModule('vendor.xml');
 return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 ```
 
@@ -102,7 +102,7 @@ return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 | Действие | Где |
 |----------|-----|
 | Установить модуль | `/bitrix/admin/partner_modules.php?lang=ru` → **Генерация XML (УПД)** → Установить |
-| Открыть настройки | `/bitrix/admin/settings.php?mid=vendor.xmldoc&lang=ru` |
+| Открыть настройки | `/bitrix/admin/settings.php?mid=vendor.xml&lang=ru` |
 | Очистить кеш | **Настройки → Производительность → Очистить кеш** (если кнопка не появилась) |
 
 После установки в сделках автоматически создаются поля:
@@ -115,7 +115,7 @@ return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 
 ### Шаг 1. Настройки модуля — что вводить
 
-Откройте **Настройки модулей → vendor.xmldoc** и заполните:
+Откройте **Настройки модулей → vendor.xml** и заполните:
 
 | Поле | Что ввести | Для первого теста |
 |------|------------|-------------------|
@@ -230,8 +230,8 @@ return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 2. Очистите кеш: **Настройки → Производительность → Очистить кеш**.
 3. Кнопка появляется **только в тулбаре** справа вверху карточки.
 4. В консоли браузера (F12) проверьте: `window.XMLDOC_CONFIG` — должен содержать `entityId` и `ajaxUrl`.
-5. Запрос идёт на `/local/modules/vendor.xmldoc/ajax/generate.php` (основной способ).
-6. Запасной action (если нужен): `vendor.xmldoc:upd.generate`.
+5. Запрос идёт на `/local/modules/vendor.xml/ajax/generate.php` (основной способ).
+6. Запасной action (если нужен): `vendor.xml:upd.generate`.
 
 #### 4.4. Что проверить после успеха
 
@@ -298,14 +298,14 @@ return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 **Где:** CRM → **Сделки** → **Роботы** / **Бизнес-процессы** → добавить действие **PHP-код**.
 
 ```php
-\Bitrix\Main\Loader::includeModule('vendor.xmldoc');
+\Bitrix\Main\Loader::includeModule('vendor.xml');
 return \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
 ```
 
 Для счёта:
 
 ```php
-\Bitrix\Main\Loader::includeModule('vendor.xmldoc');
+\Bitrix\Main\Loader::includeModule('vendor.xml');
 return \Vendor\Xmldoc\Bp\Runner::fromSmartInvoice({=Document:ID});
 ```
 
@@ -354,7 +354,7 @@ ORDER BY VERSION;
 
 ```javascript
 BX.ajax({
-    url: '/local/modules/vendor.xmldoc/ajax/generate.php',
+    url: '/local/modules/vendor.xml/ajax/generate.php',
     method: 'POST',
     dataType: 'json',
     data: {

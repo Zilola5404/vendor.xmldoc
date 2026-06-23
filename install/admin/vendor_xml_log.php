@@ -5,7 +5,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_b
 use Bitrix\Main\Loader;
 use Vendor\Xmldoc\Logger;
 
-$moduleId = 'vendor.xmldoc';
+$moduleId = 'vendor.xml';
 
 if ($APPLICATION->GetGroupRight($moduleId) < 'R') {
     $APPLICATION->AuthForm('Доступ запрещён');
@@ -33,7 +33,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_a
     Тип: <input type="text" name="entity_type" value="<?= htmlspecialcharsbx($entityType) ?>" size="12" placeholder="deal">
     ID: <input type="text" name="entity_id" value="<?= $entityId > 0 ? $entityId : '' ?>" size="8">
     <input type="submit" value="Фильтр" class="adm-btn">
-    <a href="/bitrix/admin/vendor_xmldoc_documents.php?lang=<?= LANGUAGE_ID ?>">История документов</a>
+    <a href="/bitrix/admin/vendor_xml_documents.php?lang=<?= LANGUAGE_ID ?>">История документов</a>
 </form>
 <br>
 

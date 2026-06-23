@@ -1,4 +1,4 @@
-# Технический аудит модуля vendor.xmldoc по ТЗ
+# Технический аудит модуля vendor.xml по ТЗ
 
 **Версия модуля:** 1.6.0  
 **Дата аудита:** 2026-06-17  
@@ -128,7 +128,7 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 |------------|--------|
 | Журнал: запуск, успех, ошибки | ✅ `b_xmldoc_log` |
 | Понятные сообщения пользователю | ✅ `ValidationMessages` («Заполните…») |
-| UI админки журнала | ✅ `/bitrix/admin/vendor_xmldoc_log.php` (v1.3.0) |
+| UI админки журнала | ✅ `/bitrix/admin/vendor_xml_log.php` (v1.3.0) |
 
 ### §9 Архитектура (задел)
 
@@ -182,8 +182,8 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 | Пробел | Решение |
 |--------|---------|
 | Нет activity БП / робота CRM | `install/activities/xmldocgenerateupd/` |
-| Нет UI истории документов | `vendor_xmldoc_documents.php` |
-| Нет UI журнала | `vendor_xmldoc_log.php` |
+| Нет UI истории документов | `vendor_xml_documents.php` |
+| Нет UI журнала | `vendor_xml_log.php` |
 | Банк не в mapper | Поля `*_bank_*` в `UpdMapper` |
 | Права только в AJAX | `CrmPermissions` в `GenerateService` |
 | XMLWriter недоступен на сервере | `Xml/WriterBuffer` (DOM) |
@@ -262,7 +262,7 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 
 ## Обновление на портале
 
-1. Скопировать модуль → `/local/modules/vendor.xmldoc`
+1. Скопировать модуль → `/local/modules/vendor.xml`
 2. **Marketplace → Обновить** до **1.6.0**
 3. Очистить кеш
 4. Проверить: `/local/activities/xmldocgenerateupd/` появилась

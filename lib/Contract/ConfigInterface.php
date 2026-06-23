@@ -30,4 +30,8 @@ interface ConfigInterface
     public function crmAdapter(): string;
 
     public function cloudRestWebhook(): string;
+
+    public function xmlFormatVersion(): string;
+
+    public function xsdSchemaRevision(): string;
 }

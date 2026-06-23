@@ -19,7 +19,7 @@ final class DiskStorage
         string $content,
         int $entityTypeId,
         int $entityId,
-        string $moduleId = 'vendor.xmldoc'
+        string $moduleId = 'vendor.xml'
     ): array {
         $diskFileId = self::uploadToEntityDisk($storageName, $content, $entityTypeId, $entityId);
         if ($diskFileId > 0) {

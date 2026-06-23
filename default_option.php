@@ -1,7 +1,7 @@
 <?php
 
 /** Значения настроек модуля по умолчанию */
-$vendor_xmldoc_default_option = [
+$vendor_xml_default_option = [
     'dadata_api_key'        => '',
     'seller_requisite_id'   => '',
     'signatory_mode'        => 'settings', // settings | current_user
@@ -14,4 +14,6 @@ $vendor_xmldoc_default_option = [
     'file_encoding'         => 'windows-1251',
     'crm_adapter'           => 'auto', // auto | onprem | cloud
     'cloud_rest_webhook'    => '',
+    'xml_format_version'    => '5.03', // 5.02 | 5.03
+    'xsd_schema_revision'   => 'auto', // auto | 03_04 | 03_05 …
 ];

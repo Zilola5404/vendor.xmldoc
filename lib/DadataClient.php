@@ -6,6 +6,7 @@ use Bitrix\Crm\AddressTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
+use Vendor\Xmldoc\Address\RequisiteAddressResolver;
 
 /**
  * Обогащение реквизитов через DaData по ИНН.
@@ -163,9 +164,13 @@ class DadataClient
         }
 
         $entityTypeId = \CCrmOwnerType::Requisite;
-        $typeId = defined('\Bitrix\Crm\EntityAddressType::Primary')
-            ? \Bitrix\Crm\EntityAddressType::Primary
-            : 1;
+        $typeId = RequisiteAddressResolver::TYPE_LEGAL;
+        if (class_exists(\Bitrix\Crm\EntityAddressType::class)) {
+            $registered = \Bitrix\Crm\EntityAddressType::Registered;
+            if (is_numeric($registered)) {
+                $typeId = (int)$registered;
+            }
+        }
 
         $fields = [
             'TYPE_ID'         => $typeId,
@@ -193,8 +198,8 @@ class DadataClient
                 'filter' => [
                     '=ENTITY_TYPE_ID' => $entityTypeId,
                     '=ENTITY_ID'      => $requisiteId,
+                    '=TYPE_ID'        => $typeId,
                 ],
-                'order'  => ['TYPE_ID' => 'ASC'],
                 'limit'  => 1,
             ])->fetch();
 
