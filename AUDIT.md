@@ -1,8 +1,8 @@
-# Технический аудит модуля vendor.xml по ТЗ
+# Технический аудит модуля «Генерация XML (УПД)» (ooofix.vendor.xml) по ТЗ
 
-**Версия модуля:** 1.6.0  
+**Версия модуля:** 2.2.9  
 **Дата аудита:** 2026-06-17  
-**Статус:** MVP реализован в коде; готов к приёмочному тестированию на портале.
+**Статус:** MVP реализован в коде; облако B24 — функциональный паритет с коробкой (см. `docs/CLOUD_AUDIT.md`).
 
 > ТЗ как отдельный файл в репозитории отсутствует. Первоисточник — техническое задание «Разработка модуля генерации XML-документов для Битрикс24» (MVP, этап 1).
 
@@ -128,7 +128,7 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 |------------|--------|
 | Журнал: запуск, успех, ошибки | ✅ `b_xmldoc_log` |
 | Понятные сообщения пользователю | ✅ `ValidationMessages` («Заполните…») |
-| UI админки журнала | ✅ `/bitrix/admin/vendor_xml_log.php` (v1.3.0) |
+| UI админки журнала | ✅ `/bitrix/admin/ooofix_vendor_xml_log.php` (v1.3.0) |
 
 ### §9 Архитектура (задел)
 
@@ -138,7 +138,7 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 | Изменение шаблонов | ✅ mapping + writer |
 | Несколько операторов ЭДО | ✅ `EdoGatewayInterface` |
 | Коробка B24 | ✅ целевая платформа |
-| Облако B24 | ❌ legacy `CCrmDeal` — отдельный этап |
+| Облако B24 | ✅ `CloudGenerateRuntime`, Factory API (v2.2.8) |
 | Marketplace-приложение | ❌ D7-модуль, не REST-app |
 
 ### §10 Планируемое развитие (вне MVP)
@@ -182,8 +182,8 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 | Пробел | Решение |
 |--------|---------|
 | Нет activity БП / робота CRM | `install/activities/xmldocgenerateupd/` |
-| Нет UI истории документов | `vendor_xml_documents.php` |
-| Нет UI журнала | `vendor_xml_log.php` |
+| Нет UI истории документов | `ooofix_vendor_xml_documents.php` |
+| Нет UI журнала | `ooofix_vendor_xml_log.php` |
 | Банк не в mapper | Поля `*_bank_*` в `UpdMapper` |
 | Права только в AJAX | `CrmPermissions` в `GenerateService` |
 | XMLWriter недоступен на сервере | `Xml/WriterBuffer` (DOM) |
@@ -213,11 +213,11 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 ## ❌ Вне scope MVP (не дорабатывалось)
 
 1. Интеграция Diadoc / SBIS
-2. Облако B24 (D7 CRM Service API вместо legacy)
-3. REST Marketplace-приложение
-4. Автотесты PHPUnit — базовое покрытие в `tests/Unit/` (v1.6.0)
-5. Полная XSD ФНС 5.03 (нужен файл от заказчика)
-6. Дополнительные типы документов (УКД, акт…)
+2. REST Marketplace-приложение (отдельное от local module)
+3. Автотесты PHPUnit — базовое покрытие в `tests/Unit/`
+4. Полная XSD ФНС 5.03 (нужен файл от заказчика)
+5. Дополнительные типы документов (УКД, акт…)
+6. E2E на облачном портале — чек-лист в `docs/CLOUD_AUDIT.md`
 
 ---
 
@@ -256,14 +256,24 @@ GenerateService → DataCollector → UpdMapper → UpdValidator
 
 - Потоковая запись XML напрямую в файл (не в память)
 - Очередь генерации при высокой нагрузке
-- Полный переход на CRM Service API вместо `CCrmDeal`
+
+### Облако B24 (v2.2.8)
+
+| Компонент | Статус |
+|-----------|--------|
+| `CloudGenerateRuntime` / `CloudDataCollector` | ✅ |
+| `CloudCrmEntityWriter` (UF через Factory) | ✅ |
+| Права сделок через Service API | ✅ |
+| Автоопределение SP «Счета» | ✅ |
+| REST webhook + логирование | ✅ |
+| E2E на портале | ⚠️ чек-лист `docs/CLOUD_AUDIT.md` |
 
 ---
 
 ## Обновление на портале
 
-1. Скопировать модуль → `/local/modules/vendor.xml`
-2. **Marketplace → Обновить** до **1.6.0**
+1. Скопировать модуль → `/local/modules/ooofix.vendor.xml`
+2. **Marketplace → Обновить** до **2.2.9**
 3. Очистить кеш
 4. Проверить: `/local/activities/xmldocgenerateupd/` появилась
 5. CRM → Роботы → действие **«Сформировать УПД (XML)»**

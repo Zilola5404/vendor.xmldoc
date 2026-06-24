@@ -28,7 +28,7 @@
     }
 
     function getDefaultAjaxUrl() {
-        return getSiteDir() + 'local/modules/vendor.xml/ajax/generate.php';
+        return getSiteDir() + 'local/modules/ooofix.vendor.xml/ajax/generate.php';
     }
 
     function getSessid() {

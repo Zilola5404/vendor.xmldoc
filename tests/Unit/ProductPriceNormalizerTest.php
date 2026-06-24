@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vendor\Xmldoc\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Vendor\Xmldoc\Crm\ProductAmountCalculator;
 use Vendor\Xmldoc\Crm\ProductPriceNormalizer;
 
 final class ProductPriceNormalizerTest extends TestCase
@@ -16,7 +17,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'PRICE' => 12595.86,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'Y',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(10324.48, $amounts['PRICE']);
         $this->assertSame(41297.90, $amounts['SUM_NET']);
@@ -33,7 +34,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'PRICE_BRUTTO' => 12595.86,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'Y',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(10324.48, $amounts['PRICE']);
         $this->assertSame(41297.90, $amounts['SUM_NET']);
@@ -50,7 +51,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'PRICE_BRUTTO' => 14092.32,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'Y',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(10324.48, $amounts['PRICE']);
         $this->assertSame(41297.90, $amounts['SUM_NET']);
@@ -65,7 +66,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'PRICE' => 100,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'N',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(100.0, $amounts['PRICE']);
         $this->assertSame(200.0, $amounts['SUM_NET']);
@@ -79,7 +80,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'QUANTITY' => 1,
             'PRICE' => 919.00,
             'TAX_RATE' => 22,
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(753.28, $amounts['PRICE']);
         $this->assertSame(753.28, $amounts['SUM_NET']);
@@ -96,7 +97,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'PRICE_BRUTTO' => 3348.00,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'Y',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(2744.26, $amounts['PRICE']);
         $this->assertSame(5488.52, $amounts['SUM_NET']);
@@ -112,7 +113,7 @@ final class ProductPriceNormalizerTest extends TestCase
             'DISCOUNT_SUM' => 1542.74,
             'TAX_RATE' => 22,
             'TAX_INCLUDED' => 'Y',
-        ]);
+        ], ProductAmountCalculator::MODE_1C);
 
         $this->assertSame(50383.44, $amounts['SUM_GROSS']);
         $this->assertSame(41297.90, $amounts['SUM_NET']);

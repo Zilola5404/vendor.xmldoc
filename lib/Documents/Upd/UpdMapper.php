@@ -5,6 +5,8 @@ namespace Vendor\Xmldoc\Documents\Upd;
 use Vendor\Xmldoc\Address\RegionCodeResolver;
 use Vendor\Xmldoc\Address\AddressComponentParser;
 use Vendor\Xmldoc\Config;
+use Vendor\Xmldoc\Crm\DocumentTotalsCalculator;
+use Vendor\Xmldoc\Crm\ProductAmountCalculator;
 
 /** Преобразует собранные данные CRM в плоскую структуру для XmlWriter */
 class UpdMapper
@@ -30,8 +32,9 @@ class UpdMapper
         $docNumber = $this->resolveDocNumber($entity);
         $docDate = (string)($entity['DOC_DATE'] ?? date('d.m.Y'));
 
-        $dealGross = round((float)($entity['TOTAL_GROSS'] ?? 0), 2);
-        $totalsFromDeal = $dealGross > 0;
+        // Оба режима: итоги из сумм строк (без OPPORTUNITY/TAX_VALUE).
+        // 1C: DocumentTotalsCalculator — корректировка копеек в шапке как в ЭДО.
+        $totalsFromDeal = false;
 
         $mapped = [
             'doc_number'   => $docNumber,
@@ -41,6 +44,7 @@ class UpdMapper
             'products_text'=> $this->buildProductsText($products),
             'totals'       => $this->calcTotals($products, $entity),
             'totals_from_deal' => $totalsFromDeal,
+            'calculation_mode' => Config::calculationMode(),
             '_raw'         => $data,
         ];
 
@@ -166,35 +170,28 @@ class UpdMapper
         $net = 0.0;
         $tax = 0.0;
         $gross = 0.0;
+        $taxRate = 0.0;
 
         foreach ($products as $p) {
             $net += (float)($p['SUM_NET'] ?? 0);
             $tax += (float)($p['TAX_SUM'] ?? 0);
             $gross += (float)($p['SUM_GROSS'] ?? 0);
+            if ($taxRate <= 0 && (float)($p['TAX_RATE'] ?? 0) > 0) {
+                $taxRate = (float)$p['TAX_RATE'];
+            }
         }
 
-        $totals = [
+        $lineTotals = [
             'SUM_NET'   => round($net, 2),
             'TAX_SUM'   => round($tax, 2),
             'SUM_GROSS' => round($gross, 2),
         ];
 
-        $dealGross = round((float)($entity['TOTAL_GROSS'] ?? 0), 2);
-        if ($dealGross > 0) {
-            $totals['SUM_GROSS'] = $dealGross;
-            $dealNet = round((float)($entity['TOTAL_NET'] ?? 0), 2);
-            $dealTax = round((float)($entity['TOTAL_TAX'] ?? 0), 2);
-            if ($dealNet > 0) {
-                $totals['SUM_NET'] = $dealNet;
-            }
-            if ($dealTax > 0) {
-                $totals['TAX_SUM'] = $dealTax;
-            } elseif ($dealNet > 0) {
-                $totals['TAX_SUM'] = round($dealGross - $dealNet, 2);
-            }
+        if (Config::calculationMode() === ProductAmountCalculator::MODE_BITRIX24) {
+            return DocumentTotalsCalculator::finalizeBitrix24($lineTotals);
         }
 
-        return $totals;
+        return DocumentTotalsCalculator::finalize1C($lineTotals, $taxRate > 0 ? $taxRate : 22.0);
     }
 
     /** @return array<string, array<string, mixed>> */

@@ -19,6 +19,11 @@ final class DocumentTypeRegistry
     /** @var array<string, array<string, mixed>>|null */
     private static ?array $definitions = null;
 
+    public static function resetCache(): void
+    {
+        self::$definitions = null;
+    }
+
     /** @return array<string, array<string, mixed>> */
     public static function all(): array
     {

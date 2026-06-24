@@ -6,12 +6,13 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
 use Vendor\Xmldoc\Cloud\CloudGenerateRuntime;
 use Vendor\Xmldoc\Config;
+use Vendor\Xmldoc\ModuleInfo;
 use Vendor\Xmldoc\Install\InstallEnvironment;
 
 /** Определение типа портала: облако / коробка. */
 final class PortalEnvironment
 {
-    private const MODULE = 'vendor.xml';
+    private const MODULE = ModuleInfo::MODULE_ID;
 
     public static function crmAdapterMode(): string
     {

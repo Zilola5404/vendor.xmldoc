@@ -302,13 +302,32 @@ class UpdXmlWriter
         $w->writeAttribute('СодОпер', (string)$firstProduct);
         $w->writeAttribute('ДатаПер', (string)$m['doc_date']);
 
-        $w->startElement('ОснПер');
-        $w->writeAttribute('РеквНаимДок', 'Акт');
-        $w->writeAttribute('РеквНомерДок', (string)$m['doc_number']);
-        $w->writeAttribute('РеквДатаДок', (string)$m['doc_date']);
-        $w->endElement();
+        $this->writeTransferBasis($w, $m);
 
         $w->endElement();
+        $w->endElement();
+    }
+
+    /** @param array<string, mixed> $m */
+    private function writeTransferBasis(WriterBuffer $w, array $m): void
+    {
+        $name = trim((string)($m['transfer_basis_name'] ?? ''));
+        $number = trim((string)($m['transfer_basis_number'] ?? ''));
+        $date = trim((string)($m['transfer_basis_date'] ?? ''));
+
+        if ($name !== '' && $number !== '' && $date !== '') {
+            $w->startElement('ОснПер');
+            $w->writeAttribute('РеквНаимДок', $name);
+            $w->writeAttribute('РеквНомерДок', $number);
+            $w->writeAttribute('РеквДатаДок', $date);
+            $w->endElement();
+
+            return;
+        }
+
+        // XSD не допускает пустые атрибуты ОснПер — только признак «без документа-основания»
+        $w->startElement('БезДокОснПер');
+        $w->text('1');
         $w->endElement();
     }
 

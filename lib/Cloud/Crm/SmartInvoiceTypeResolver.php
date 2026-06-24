@@ -3,22 +3,35 @@
 namespace Vendor\Xmldoc\Cloud\Crm;
 
 use Bitrix\Crm\Model\Dynamic\TypeTable;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\Config;
+use Vendor\Xmldoc\ModuleInfo;
 
 /** Поиск entityTypeId СП «Счета» (на облаке ID часто ≠ 31). */
 final class SmartInvoiceTypeResolver
 {
+    private const MODULE = ModuleInfo::MODULE_ID;
     private const TITLE_HINTS = ['счет', 'счета', 'invoice', 'smart_invoice'];
 
     public static function resolveConfiguredOrDetect(): int
     {
-        $configured = Config::smartInvoiceTypeId();
-        if ($configured > 0) {
+        $configured = (int)Option::get(self::MODULE, 'smart_invoice_type_id', '31');
+
+        return self::resolveActiveTypeId($configured);
+    }
+
+    public static function resolveActiveTypeId(int $configured): int
+    {
+        if ($configured > 0 && self::factoryExists($configured)) {
             return $configured;
         }
 
-        return self::detectFromCrm();
+        $detected = self::detectFromCrm();
+        if ($detected > 0) {
+            return $detected;
+        }
+
+        return $configured > 0 ? $configured : 31;
     }
 
     public static function detectFromCrm(): int

@@ -1,6 +1,6 @@
 {
     "name": "vendor/xmldoc-tests",
-    "description": "Unit tests for vendor.xml module",
+    "description": "Unit tests for ooofix.vendor.xml module",
     "require-dev": {
         "phpunit/phpunit": "^10.5"
     },

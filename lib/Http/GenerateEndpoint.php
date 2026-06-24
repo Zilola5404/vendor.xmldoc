@@ -20,8 +20,8 @@ class GenerateEndpoint
             return GenerateResult::fail(['Сессия истекла. Обновите страницу.'])->toArray();
         }
 
-        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
-            return GenerateResult::fail(['Модуль vendor.xml или CRM не установлен'])->toArray();
+        if (!Loader::includeModule('ooofix.vendor.xml') || !Loader::includeModule('crm')) {
+            return GenerateResult::fail(['Модуль ooofix.vendor.xml или CRM не установлен'])->toArray();
         }
 
         $entityType = (string)($_POST['entityType'] ?? $_REQUEST['entityType'] ?? '');

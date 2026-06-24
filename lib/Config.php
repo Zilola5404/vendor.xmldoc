@@ -93,4 +93,9 @@ class Config
     {
         return self::i()->xsdSchemaRevision();
     }
+
+    public static function calculationMode(): string
+    {
+        return self::i()->calculationMode();
+    }
 }

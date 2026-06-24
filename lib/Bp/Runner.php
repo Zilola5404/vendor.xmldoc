@@ -28,8 +28,8 @@ class Runner
 
     public static function run(string $entityType, int $entityId): array
     {
-        if (!\Bitrix\Main\Loader::includeModule('vendor.xml')) {
-            return ['success' => false, 'message' => 'Модуль vendor.xml не установлен'];
+        if (!\Bitrix\Main\Loader::includeModule('ooofix.vendor.xml')) {
+            return ['success' => false, 'message' => 'Модуль ooofix.vendor.xml не установлен'];
         }
 
         $service = new GenerateService();

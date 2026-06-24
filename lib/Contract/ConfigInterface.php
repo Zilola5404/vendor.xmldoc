@@ -34,4 +34,7 @@ interface ConfigInterface
     public function xmlFormatVersion(): string;
 
     public function xsdSchemaRevision(): string;
+
+    /** 1C | BITRIX24 */
+    public function calculationMode(): string;
 }

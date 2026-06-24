@@ -10,15 +10,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 IncludeModuleLangFile(__FILE__);
 
-class vendor_xml extends CModule
+class ooofix_vendor_xml extends CModule
 {
-    public $MODULE_ID = 'vendor.xml';
+    public $MODULE_ID = 'ooofix.vendor.xml';
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
     public $MODULE_NAME;
     public $MODULE_DESCRIPTION;
-    public $PARTNER_NAME = 'Vendor';
-    public $PARTNER_URI = '';
+    public $PARTNER_NAME = 'ООО "РЕШЕНИЕ"';
+    public $PARTNER_URI = 'https://ooofix.ru';
     public $MODULE_GROUP_RIGHTS = 'N';
 
     public function __construct()
@@ -267,11 +267,11 @@ class vendor_xml extends CModule
         }
 
         include $defaultsFile;
-        if (empty($vendor_xml_default_option) || !is_array($vendor_xml_default_option)) {
+        if (empty($ooofix_vendor_xml_default_option) || !is_array($ooofix_vendor_xml_default_option)) {
             return true;
         }
 
-        foreach ($vendor_xml_default_option as $name => $value) {
+        foreach ($ooofix_vendor_xml_default_option as $name => $value) {
             $marker = '__XMLDOC_UNSET__';
             if (\Bitrix\Main\Config\Option::get($this->MODULE_ID, $name, $marker) === $marker) {
                 \Bitrix\Main\Config\Option::set($this->MODULE_ID, $name, (string)$value);
@@ -368,7 +368,7 @@ class vendor_xml extends CModule
             DeleteDirFilesEx('/bitrix/js/vendor/xmldoc');
         }
 
-        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xml_generate.php';
+        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/ooofix_vendor_xml_generate.php';
         if (is_file($toolsFile)) {
             @unlink($toolsFile);
         }
@@ -382,7 +382,7 @@ class vendor_xml extends CModule
             return true;
         }
 
-        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xml', 'smart_invoice_type_id', '31');
+        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('ooofix.vendor.xml', 'smart_invoice_type_id', '31');
 
         if (class_exists(\Vendor\Xmldoc\Install\UserFieldInstaller::class)) {
             \Vendor\Xmldoc\Install\UserFieldInstaller::installAll($smartTypeId);

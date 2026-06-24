@@ -3,12 +3,15 @@
 namespace Vendor\Xmldoc;
 
 use Bitrix\Main\Config\Option;
+use Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver;
 use Vendor\Xmldoc\Contract\ConfigInterface;
+use Vendor\Xmldoc\ModuleInfo;
+use Vendor\Xmldoc\Environment\PortalEnvironment;
 
 /** Реализация настроек модуля из b_option. */
 final class ModuleConfig implements ConfigInterface
 {
-    private const MODULE = 'vendor.xml';
+    private const MODULE = ModuleInfo::MODULE_ID;
 
     public function dadataApiKey(): string
     {
@@ -37,7 +40,13 @@ final class ModuleConfig implements ConfigInterface
 
     public function smartInvoiceTypeId(): int
     {
-        return (int)Option::get(self::MODULE, 'smart_invoice_type_id', '31');
+        $configured = (int)Option::get(self::MODULE, 'smart_invoice_type_id', '31');
+
+        if (PortalEnvironment::isCloud() && class_exists(SmartInvoiceTypeResolver::class)) {
+            return SmartInvoiceTypeResolver::resolveActiveTypeId($configured);
+        }
+
+        return $configured > 0 ? $configured : 31;
     }
 
     public function publishTimeline(): bool
@@ -90,5 +99,12 @@ final class ModuleConfig implements ConfigInterface
     public function xsdSchemaRevision(): string
     {
         return (string)Option::get(self::MODULE, 'xsd_schema_revision', 'auto');
+    }
+
+    public function calculationMode(): string
+    {
+        $mode = strtoupper((string)Option::get(self::MODULE, 'calculation_mode', '1C'));
+
+        return $mode === 'BITRIX24' ? 'BITRIX24' : '1C';
     }
 }

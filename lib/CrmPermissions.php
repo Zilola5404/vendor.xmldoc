@@ -4,6 +4,7 @@ namespace Vendor\Xmldoc;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
+use Vendor\Xmldoc\Environment\PortalEnvironment;
 
 /** Проверка прав CRM перед генерацией УПД */
 class CrmPermissions
@@ -39,6 +40,10 @@ class CrmPermissions
 
     private static function canUpdateDeal(int $dealId): bool
     {
+        if (PortalEnvironment::isCloud() && class_exists(Container::class)) {
+            return self::canUpdateViaFactory(\CCrmOwnerType::Deal, $dealId);
+        }
+
         if (!class_exists(\CCrmDeal::class)) {
             return false;
         }
@@ -57,7 +62,16 @@ class CrmPermissions
     private static function canUpdateSmartItem(int $itemId): bool
     {
         $typeId = Config::smartInvoiceTypeId();
-        if ($typeId <= 0 || !class_exists(Container::class)) {
+        if ($typeId <= 0) {
+            return false;
+        }
+
+        return self::canUpdateViaFactory($typeId, $itemId);
+    }
+
+    private static function canUpdateViaFactory(int $entityTypeId, int $itemId): bool
+    {
+        if (!class_exists(Container::class)) {
             return false;
         }
 
@@ -65,15 +79,15 @@ class CrmPermissions
         $userPermissions = $container->getUserPermissions();
 
         if (method_exists($userPermissions, 'checkUpdatePermissions')) {
-            return (bool)$userPermissions->checkUpdatePermissions($typeId, $itemId);
+            return (bool)$userPermissions->checkUpdatePermissions($entityTypeId, $itemId);
         }
 
         if (method_exists($userPermissions, 'entityCanUpdate')) {
-            return (bool)$userPermissions->entityCanUpdate($typeId, $itemId);
+            return (bool)$userPermissions->entityCanUpdate($entityTypeId, $itemId);
         }
 
         if (method_exists($userPermissions, 'checkReadPermissions')) {
-            return (bool)$userPermissions->checkReadPermissions($typeId, $itemId);
+            return (bool)$userPermissions->checkReadPermissions($entityTypeId, $itemId);
         }
 
         return false;

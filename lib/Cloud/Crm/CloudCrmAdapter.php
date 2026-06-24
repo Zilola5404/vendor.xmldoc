@@ -6,6 +6,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Vendor\Xmldoc\Contract\CrmAdapterInterface;
 use Vendor\Xmldoc\DocumentTypeRegistry;
+use Vendor\Xmldoc\ModuleInfo;
 
 /**
  * Адаптер CRM для облачного Б24.
@@ -13,7 +14,7 @@ use Vendor\Xmldoc\DocumentTypeRegistry;
  */
 final class CloudCrmAdapter implements CrmAdapterInterface
 {
-    private const MODULE = 'vendor.xml';
+    private const MODULE = ModuleInfo::MODULE_ID;
 
     public function isCloud(): bool
     {

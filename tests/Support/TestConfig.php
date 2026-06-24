@@ -12,6 +12,7 @@ final class TestConfig implements ConfigInterface
     public function __construct(
         private readonly string $mappingPath,
         private readonly string $updFunction = 'СЧФДОП',
+        private readonly string $calculationMode = '1C',
     ) {
     }
 
@@ -88,5 +89,10 @@ final class TestConfig implements ConfigInterface
     public function xsdSchemaRevision(): string
     {
         return 'auto';
+    }
+
+    public function calculationMode(): string
+    {
+        return $this->calculationMode;
     }
 }

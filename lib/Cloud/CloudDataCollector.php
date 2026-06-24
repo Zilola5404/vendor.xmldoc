@@ -3,6 +3,7 @@
 namespace Vendor\Xmldoc\Cloud;
 
 use Bitrix\Crm\Service\Container;
+use Vendor\Xmldoc\Crm\RequisiteAddressResolver;
 use Vendor\Xmldoc\DataCollector;
 
 /**
@@ -24,25 +25,44 @@ final class CloudDataCollector extends DataCollector
             throw new \RuntimeException('Сделка не найдена: ' . $dealId);
         }
 
-        $data = $item->getData();
-        $docDate = date('d.m.Y');
-        $opportunity = (float)($data['OPPORTUNITY'] ?? 0);
-        $taxValue = round((float)($data['TAX_VALUE'] ?? 0), 2);
+        return $this->buildDealEntityFromRow($item->getData(), $dealId);
+    }
 
-        return [
-            'ID'              => $dealId,
-            'ENTITY_TYPE_ID'  => $entityTypeId,
-            'ENTITY_TYPE'     => self::TYPE_DEAL,
-            'CATEGORY_ID'     => (int)($data['CATEGORY_ID'] ?? 0),
-            'COMPANY_ID'      => (int)($data['COMPANY_ID'] ?? 0),
-            'UF_UPD_NUMBER'   => (string)($data['UF_UPD_NUMBER'] ?? ''),
-            'DOC_DATE'        => $docDate,
-            'OPPORTUNITY'     => $opportunity,
-            'TAX_VALUE'       => $taxValue,
-            'TOTAL_GROSS'     => round($opportunity, 2),
-            'TOTAL_NET'       => round($opportunity - $taxValue, 2),
-            'TOTAL_TAX'       => $taxValue,
-            'USER_FIELDS'     => $this->extractUserFields($data, ['UF_UPD_NUMBER', 'UF_UPD_FILE']),
-        ];
+    /** @return array<string, mixed> */
+    protected function fetchBuyer(int $companyId): array
+    {
+        $entityTypeId = \CCrmOwnerType::Company;
+        $factory = Container::getInstance()->getFactory($entityTypeId);
+        if ($factory === null) {
+            return parent::fetchBuyer($companyId);
+        }
+
+        $item = $factory->getItem($companyId);
+        if ($item === null) {
+            return [];
+        }
+
+        $data = $item->getData();
+        $title = (string)($data['TITLE'] ?? '');
+
+        $requisite = $this->fetchRequisite($entityTypeId, $companyId);
+        if ($requisite === []) {
+            return [
+                'COMPANY_ID' => $companyId,
+                'NAME'       => $title,
+            ];
+        }
+
+        $requisiteId = (int)($requisite['REQUISITE_ID'] ?? 0);
+        $bank = $this->fetchBankDetails($requisiteId);
+        $address = RequisiteAddressResolver::fetchLegalAddress(
+            \CCrmOwnerType::Requisite,
+            $requisiteId
+        );
+
+        return array_merge($requisite, $bank, $address, [
+            'COMPANY_ID' => $companyId,
+            'NAME'       => $requisite['NAME'] ?: $title,
+        ]);
     }
 }

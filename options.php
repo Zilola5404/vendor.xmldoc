@@ -2,15 +2,15 @@
 
 /**
  * Страница настроек модуля.
- * Открывается: Настройки → Настройки продукта → Настройки модулей → vendor.xml
- * URL: /bitrix/admin/settings.php?mid=vendor.xml&lang=ru
+ * Открывается: Настройки → Настройки продукта → Настройки модулей → Генерация XML (УПД)
+ * URL: /bitrix/admin/settings.php?mid=ooofix.vendor.xml&lang=ru
  */
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
-$module_id = 'vendor.xml';
+$module_id = 'ooofix.vendor.xml';
 
 Loader::includeModule('main');
 Loc::loadMessages(__FILE__);
@@ -34,12 +34,13 @@ $optionCodes = [
     'file_encoding',
     'crm_adapter',
     'cloud_rest_webhook',
+    'calculation_mode',
 ];
 
 $portalLabel = 'не определён';
 $runtimePathLabel = 'не определён';
 $runtimeReady = true;
-if (Loader::includeModule('vendor.xml') && class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)) {
+if (Loader::includeModule('ooofix.vendor.xml') && class_exists(\Vendor\Xmldoc\Environment\PortalEnvironment::class)) {
     $portalLabel = \Vendor\Xmldoc\Environment\PortalEnvironment::label();
     $runtimePathLabel = \Vendor\Xmldoc\Environment\PortalEnvironment::runtimePathLabel();
     $runtimeReady = \Vendor\Xmldoc\Environment\PortalEnvironment::isCloudRuntimeReady();
@@ -47,12 +48,33 @@ if (Loader::includeModule('vendor.xml') && class_exists(\Vendor\Xmldoc\Environme
 
 // Принудительное создание UF_UPD_* (сделки + СП «Счета»)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['install_uf'])) {
-    Loader::includeModule('vendor.xml');
-    $module = CModule::CreateModuleObject('vendor.xml');
+    Loader::includeModule('ooofix.vendor.xml');
+    $module = CModule::CreateModuleObject('ooofix.vendor.xml');
     if ($module !== null && method_exists($module, 'InstallUserFields')) {
         $module->InstallUserFields();
     }
     LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . '&uf=Y');
+}
+
+// Автоопределение entityTypeId СП «Счета» (актуально для облака)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['detect_smart_invoice'])) {
+    Loader::includeModule('ooofix.vendor.xml');
+    $detected = 0;
+    if (class_exists(\Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::class)) {
+        $detected = \Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver::detectFromCrm();
+        if ($detected > 0) {
+            Option::set($module_id, 'smart_invoice_type_id', (string)$detected);
+            if (class_exists(\Vendor\Xmldoc\DocumentTypeRegistry::class)) {
+                \Vendor\Xmldoc\DocumentTypeRegistry::resetCache();
+            }
+            $module = CModule::CreateModuleObject('ooofix.vendor.xml');
+            if ($module !== null && method_exists($module, 'InstallUserFields')) {
+                $module->InstallUserFields();
+            }
+        }
+    }
+    $query = $detected > 0 ? '&sp_detected=' . $detected : '&sp_not_found=Y';
+    LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . $query);
 }
 
 // Сохранение
@@ -66,10 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
         Option::set($module_id, $code, $value);
     }
 
-    Loader::includeModule('vendor.xml');
-    $module = CModule::CreateModuleObject('vendor.xml');
+    Loader::includeModule('ooofix.vendor.xml');
+    $module = CModule::CreateModuleObject('ooofix.vendor.xml');
     if ($module !== null && method_exists($module, 'InstallUserFields')) {
         $module->InstallUserFields();
+    }
+    if (class_exists(\Vendor\Xmldoc\DocumentTypeRegistry::class)) {
+        \Vendor\Xmldoc\DocumentTypeRegistry::resetCache();
     }
 
     LocalRedirect($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID . '&saved=Y');
@@ -90,6 +115,20 @@ if (!empty($_GET['saved'])) {
 
 if (!empty($_GET['uf'])) {
     CAdminMessage::ShowMessage(['MESSAGE' => 'Поля UF_UPD_NUMBER и UF_UPD_FILE проверены/созданы', 'TYPE' => 'OK']);
+}
+
+if (!empty($_GET['sp_detected'])) {
+    CAdminMessage::ShowMessage([
+        'MESSAGE' => 'СП «Счета» определён: entityTypeId = ' . (int)$_GET['sp_detected'],
+        'TYPE'    => 'OK',
+    ]);
+}
+
+if (!empty($_GET['sp_not_found'])) {
+    CAdminMessage::ShowMessage([
+        'MESSAGE' => 'Не удалось автоматически определить СП «Счета». Укажите entityTypeId вручную.',
+        'TYPE'    => 'ERROR',
+    ]);
 }
 ?>
 
@@ -136,7 +175,7 @@ if (!empty($_GET['uf'])) {
         <td>entityTypeId СП «Счета»:</td>
         <td>
             <input type="text" name="smart_invoice_type_id" size="20" value="<?= htmlspecialcharsbx(Option::get($module_id, 'smart_invoice_type_id', '31')) ?>">
-            <br><small>По умолчанию: 31 (СП «Счета»)</small>
+            <br><small>По умолчанию: 31 (коробка). На облаке ID часто другой — нажмите «Определить СП».</small>
         </td>
     </tr>
     <tr>
@@ -191,14 +230,29 @@ if (!empty($_GET['uf'])) {
         </td>
     </tr>
     <tr>
+        <td>Режим расчёта сумм УПД:</td>
+        <td>
+            <?php $calcMode = Option::get($module_id, 'calculation_mode', '1C'); ?>
+            <select name="calculation_mode">
+                <option value="1C" <?= $calcMode === '1C' ? 'selected' : '' ?>>1С / ЭДО — деление суммы с НДС, итоги из сделки</option>
+                <option value="BITRIX24" <?= $calcMode === 'BITRIX24' ? 'selected' : '' ?>>Битрикс24 — цена без НДС × кол-во, итоги = сумма строк</option>
+            </select>
+            <br><small>
+                <b>1С:</b> для Диадoc/СБИС; строки и шапка совпадают с OPPORTUNITY/TAX_VALUE.<br>
+                <b>Битрикс24:</b> строки как в таблице товаров сделки; «ВсегоОпл» = сумма строк
+                (шапка CRM может отличаться на копейки по НДС). Подробнее: docs/CALCULATION_MODES.md
+            </small>
+        </td>
+    </tr>
+    <tr>
         <td colspan="2"><b>Окружение</b> (тип портала: <?= htmlspecialcharsbx($portalLabel) ?>)</td>
     </tr>
     <tr>
         <td>Активный runtime:</td>
         <td>
-            <code>vendor.xml</code> — <?= htmlspecialcharsbx($runtimePathLabel) ?>
+            <code><?= htmlspecialcharsbx(\Vendor\Xmldoc\ModuleInfo::MODULE_TITLE) ?></code> — <?= htmlspecialcharsbx($runtimePathLabel) ?>
             <?php if (!$runtimeReady): ?>
-                <br><span style="color:#c00">Cloud-runtime не найден. Обновите модуль vendor.xml до версии 2.0+.</span>
+                <br><span style="color:#c00">Cloud-runtime не найден. Обновите модуль ooofix.vendor.xml до версии 2.0+.</span>
             <?php endif; ?>
         </td>
     </tr>
@@ -225,11 +279,12 @@ if (!empty($_GET['uf'])) {
     <?php $tabControl->Buttons(); ?>
     <input type="submit" name="save" value="Сохранить" class="adm-btn-save">
     <input type="submit" name="install_uf" value="Создать поля УПД" class="adm-btn" title="UF_UPD_NUMBER и UF_UPD_FILE для сделок и СП «Счета»">
+    <input type="submit" name="detect_smart_invoice" value="Определить СП «Счета»" class="adm-btn" title="Автоопределение entityTypeId смарт-процесса «Счета» (облако)">
     <?php $tabControl->End(); ?>
 </form>
 
 <p style="margin-top:16px">
-    <a href="/bitrix/admin/vendor_xml_documents.php?lang=<?= LANGUAGE_ID ?>">История документов УПД</a>
+    <a href="/bitrix/admin/ooofix_vendor_xml_documents.php?lang=<?= LANGUAGE_ID ?>">История документов УПД</a>
     &nbsp;|&nbsp;
-    <a href="/bitrix/admin/vendor_xml_log.php?lang=<?= LANGUAGE_ID ?>">Журнал генерации</a>
+    <a href="/bitrix/admin/ooofix_vendor_xml_log.php?lang=<?= LANGUAGE_ID ?>">Журнал генерации</a>
 </p>
