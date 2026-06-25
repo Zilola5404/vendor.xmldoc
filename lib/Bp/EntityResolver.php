@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\Xmldoc\Bp;
+namespace Ooofix\Xmlupd\Bp;
 
-use Vendor\Xmldoc\Config;
-use Vendor\Xmldoc\DataCollector;
+use Ooofix\Xmlupd\Config;
+use Ooofix\Xmlupd\DataCollector;
 
 /** Определение сущности CRM из контекста бизнес-процесса / робота */
 final class EntityResolver

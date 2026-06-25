@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
-use Vendor\Xmldoc\Contract\GenerateResultInterface;
+use Ooofix\Xmlupd\Contract\GenerateResultInterface;
 
 class GenerateResult implements GenerateResultInterface
 {

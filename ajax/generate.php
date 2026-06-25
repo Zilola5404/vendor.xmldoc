@@ -11,12 +11,12 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_be
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
-use Vendor\Xmldoc\Http\GenerateEndpoint;
+use Ooofix\Xmlupd\Http\GenerateEndpoint;
 
 /**
  * @param array<string, mixed> $payload
  */
-function xmldoc_send_json(array $payload): never
+function ooofix_xmlupd_send_json(array $payload): never
 {
     if (function_exists('ob_get_level')) {
         while (ob_get_level() > 0) {
@@ -30,10 +30,10 @@ function xmldoc_send_json(array $payload): never
 }
 
 try {
-    Loader::includeModule('vendor.xml');
-    xmldoc_send_json(GenerateEndpoint::execute());
+    Loader::includeModule('ooofix.xmlupd');
+    ooofix_xmlupd_send_json(GenerateEndpoint::execute());
 } catch (\Throwable $e) {
-    xmldoc_send_json([
+    ooofix_xmlupd_send_json([
         'success' => false,
         'message' => $e->getMessage(),
         'errors'  => [$e->getMessage()],

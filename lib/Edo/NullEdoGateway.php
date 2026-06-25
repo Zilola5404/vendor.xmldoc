@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\Xmldoc\Edo;
+namespace Ooofix\Xmlupd\Edo;
 
-use Vendor\Xmldoc\Contract\EdoGatewayInterface;
+use Ooofix\Xmlupd\Contract\EdoGatewayInterface;
 
 /** Заглушка: отправка в ЭДО будет на этапе 2 */
 class NullEdoGateway implements EdoGatewayInterface

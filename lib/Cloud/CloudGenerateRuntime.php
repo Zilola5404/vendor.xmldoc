@@ -1,11 +1,11 @@
 <?php
 
-namespace Vendor\Xmldoc\Cloud;
+namespace Ooofix\Xmlupd\Cloud;
 
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\FileSaver;
-use Vendor\Xmldoc\Runtime\AbstractGenerateRuntime;
-use Vendor\Xmldoc\Cloud\Crm\CloudCrmEntityWriter;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\FileSaver;
+use Ooofix\Xmlupd\Runtime\AbstractGenerateRuntime;
+use Ooofix\Xmlupd\Cloud\Crm\CloudCrmEntityWriter;
 
 /** Runtime генерации УПД для облачного Bitrix24. */
 final class CloudGenerateRuntime extends AbstractGenerateRuntime

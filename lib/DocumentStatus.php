@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 /** Статусы документа в реестре (подготовка к ЭДО) */
 final class DocumentStatus

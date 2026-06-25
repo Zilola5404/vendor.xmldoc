@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Documents\Upd;
+namespace Ooofix\Xmlupd\Documents\Upd;
 
-use Vendor\Xmldoc\Config;
-use Vendor\Xmldoc\Contract\DocumentBuilderInterface;
-use Vendor\Xmldoc\Xml\XmlFormatter;
+use Ooofix\Xmlupd\Config;
+use Ooofix\Xmlupd\Contract\DocumentBuilderInterface;
+use Ooofix\Xmlupd\Xml\XmlFormatter;
 
 /** Сборка и валидация УПД — реализация DocumentBuilderInterface */
 class UpdBuilder implements DocumentBuilderInterface

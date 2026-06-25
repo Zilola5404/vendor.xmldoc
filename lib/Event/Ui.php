@@ -1,100 +1,149 @@
 <?php
 
-namespace Vendor\Xmldoc\Event;
+namespace Ooofix\Xmlupd\Event;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
-use Vendor\Xmldoc\Config;
-use Vendor\Xmldoc\ModuleInfo;
+use Ooofix\Xmlupd\Admin\ModuleAccess;
+use Ooofix\Xmlupd\Config;
+use Ooofix\Xmlupd\ModuleInfo;
+use Ooofix\Xmlupd\Portal\PortalRoutes;
 
-/** Подключение кнопки «Сформировать УПД» на страницах CRM */
+/** Кнопки CRM: генерация УПД, настройки, пункт меню (JS-резерв). */
 class Ui
 {
     public static function onProlog(): void
     {
-        self::bootAssets();
+        self::bootCrmMenuAssets();
+        self::bootDetailAssets();
     }
 
     public static function onEpilog(): void
     {
-        self::bootAssets();
+        self::bootCrmMenuAssets();
+        self::bootDetailAssets();
     }
 
-    private static function bootAssets(): void
+    private static function bootCrmMenuAssets(): void
     {
-        static $loaded = false;
-        if ($loaded) {
+        static $menuLoaded = false;
+        if ($menuLoaded || !self::isCrmSection()) {
             return;
         }
 
-        if (!self::isCrmDetailPage()) {
+        if (!Loader::includeModule('ooofix.xmlupd') || !Loader::includeModule('crm')) {
             return;
         }
 
-        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
+        ModuleAccess::ensureModuleLoaded();
+        if (!ModuleAccess::canRead()) {
             return;
         }
+
+        $menuLoaded = true;
+
+        $asset = Asset::getInstance();
+        $asset->addJs(self::resolveCrmMenuJsPath());
+
+        $menuConfig = [
+            'enabled' => true,
+            'url'     => PortalRoutes::settings(),
+            'name'    => 'XML Документы',
+        ];
+
+        $asset->addString(
+            '<script>window.OX_UPD_CRM_MENU = ' . \CUtil::PhpToJSObject($menuConfig) . ';</script>',
+            true,
+            \Bitrix\Main\Page\AssetLocation::AFTER_JS
+        );
+    }
+
+    private static function bootDetailAssets(): void
+    {
+        static $detailLoaded = false;
+        if ($detailLoaded || !self::isCrmDetailPage()) {
+            return;
+        }
+
+        if (!Loader::includeModule('ooofix.xmlupd') || !Loader::includeModule('crm')) {
+            return;
+        }
+
+        ModuleAccess::ensureModuleLoaded();
 
         $entity = self::detectEntity();
         if ($entity === null) {
             return;
         }
 
-        $loaded = true;
+        $detailLoaded = true;
+
+        Loc::loadMessages(__FILE__);
+
+        $canWrite = ModuleAccess::canWrite();
+        $canRead = ModuleAccess::canRead();
 
         $asset = Asset::getInstance();
         $asset->addJs(self::resolveJsPath());
 
         $config = [
-            'entityType'  => $entity['type'],
-            'entityId'    => $entity['id'],
-            'ajaxUrl'     => self::resolveAjaxUrl(),
-            'sessid'      => bitrix_sessid(),
-            'smartTypeId' => Config::smartInvoiceTypeId(),
-            'jsVersion'   => ModuleInfo::version(),
+            'entityType'   => $entity['type'],
+            'entityId'     => $entity['id'],
+            'ajaxUrl'      => self::resolveAjaxUrl(),
+            'sessid'       => bitrix_sessid(),
+            'smartTypeId'  => Config::smartInvoiceTypeId(),
+            'jsVersion'    => ModuleInfo::version(),
+            'canGenerate'  => $canWrite && $entity['id'] > 0,
+            'canSettings'  => $canRead,
+            'settingsUrl'  => PortalRoutes::settings() . (str_contains(PortalRoutes::settings(), '?') ? '&' : '?') . 'IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER',
+            'settingsLabel'=> Loc::getMessage('OOOFIX_XMLUPD_UI_SETTINGS_BTN') ?: 'Настройки УПД',
+            'generateLabel'=> Loc::getMessage('OOOFIX_XMLUPD_UI_GENERATE_BTN') ?: 'Сформировать УПД',
         ];
 
         $asset->addString(
-            '<script>window.XMLDOC_CONFIG = ' . \CUtil::PhpToJSObject($config) . ';</script>',
+            '<script>window.OOOFIX_XMLUPD_CONFIG = ' . \CUtil::PhpToJSObject($config) . ';</script>',
             true,
             \Bitrix\Main\Page\AssetLocation::AFTER_JS
         );
     }
 
-    private static function moduleVersion(): string
+    private static function resolveCrmMenuJsPath(): string
     {
-        return ModuleInfo::version();
+        $siteDir = self::siteDir();
+        $version = ModuleInfo::version();
+
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/ooofix/xmlupd/crm-menu.js')) {
+            return $siteDir . 'bitrix/js/ooofix/xmlupd/crm-menu.js?v=' . rawurlencode($version);
+        }
+
+        return $siteDir . 'local/modules/ooofix.xmlupd/install/js/crm-menu.js?v=' . rawurlencode($version);
     }
 
     private static function resolveJsPath(): string
     {
         $siteDir = self::siteDir();
-        $version = self::moduleVersion();
+        $version = ModuleInfo::version();
 
-        // Всегда из исходников модуля — актуальный JS без кеша /bitrix/js/
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xml/install/js/generate.js')) {
-            return $siteDir . 'local/modules/vendor.xml/install/js/generate.js?v=' . rawurlencode($version);
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/ooofix/xmlupd/generate.js')) {
+            return $siteDir . 'bitrix/js/ooofix/xmlupd/generate.js?v=' . rawurlencode($version);
         }
 
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/vendor/xmldoc/generate.js')) {
-            return $siteDir . 'bitrix/js/vendor/xmldoc/generate.js?v=' . rawurlencode($version);
-        }
-
-        return $siteDir . 'local/modules/vendor.xml/install/js/generate.js?v=' . rawurlencode($version);
+        return $siteDir . 'local/modules/ooofix.xmlupd/install/js/generate.js?v=' . rawurlencode($version);
     }
 
     private static function resolveAjaxUrl(): string
     {
         $siteDir = self::siteDir();
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/vendor.xml/ajax/generate.php')) {
-            return $siteDir . 'local/modules/vendor.xml/ajax/generate.php';
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/ooofix.xmlupd/ajax/generate.php')) {
+            return $siteDir . 'local/modules/ooofix.xmlupd/ajax/generate.php';
         }
 
-        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xml_generate.php')) {
-            return $siteDir . 'bitrix/tools/vendor_xml_generate.php';
+        if (is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/ooofix_xmlupd_generate.php')) {
+            return $siteDir . 'bitrix/tools/ooofix_xmlupd_generate.php';
         }
 
-        return $siteDir . 'local/modules/vendor.xml/ajax/generate.php';
+        return $siteDir . 'local/modules/ooofix.xmlupd/ajax/generate.php';
     }
 
     private static function siteDir(): string
@@ -102,6 +151,11 @@ class Ui
         $dir = defined('SITE_DIR') ? (string)SITE_DIR : '/';
 
         return str_ends_with($dir, '/') ? $dir : $dir . '/';
+    }
+
+    private static function isCrmSection(): bool
+    {
+        return str_contains(self::getRequestUri(), '/crm/');
     }
 
     private static function isCrmDetailPage(): bool

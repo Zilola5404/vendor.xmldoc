@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Contract;
+namespace Ooofix\Xmlupd\Contract;
 
 /**
  * Абстракция CRM для коробки и облака. XMLDOC-26

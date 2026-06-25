@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Dto;
+namespace Ooofix\Xmlupd\Dto;
 
 /** Запрос на генерацию УПД. XMLDOC-27 */
 final class GenerateRequestDto

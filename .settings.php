@@ -3,9 +3,9 @@
 return [
     'controllers' => [
         'value' => [
-            'defaultNamespace' => '\\Vendor\\Xmldoc\\Controller',
+            'defaultNamespace' => '\\Ooofix\\Xmlupd\\Controller',
             'namespaces' => [
-                '\\Vendor\\Xmldoc\\Controller' => 'controller',
+                '\\Ooofix\\Xmlupd\\Controller' => 'controller',
             ],
         ],
         'readonly' => true,

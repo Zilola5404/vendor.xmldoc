@@ -1,14 +1,14 @@
 <?php
 
-namespace Vendor\Xmldoc\Http;
+namespace Ooofix\Xmlupd\Http;
 
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\CrmPermissions;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\GenerateResult;
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
-use Vendor\Xmldoc\Dto\EntityContextDto;
-use Vendor\Xmldoc\GenerateService;
+use Ooofix\Xmlupd\CrmPermissions;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\GenerateResult;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\Dto\EntityContextDto;
+use Ooofix\Xmlupd\GenerateService;
 
 /** Общая логика AJAX-генерации УПД */
 class GenerateEndpoint
@@ -20,8 +20,8 @@ class GenerateEndpoint
             return GenerateResult::fail(['Сессия истекла. Обновите страницу.'])->toArray();
         }
 
-        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
-            return GenerateResult::fail(['Модуль vendor.xml или CRM не установлен'])->toArray();
+        if (!Loader::includeModule('ooofix.xmlupd') || !Loader::includeModule('crm')) {
+            return GenerateResult::fail(['Модуль ooofix.xmlupd или CRM не установлен'])->toArray();
         }
 
         $entityType = (string)($_POST['entityType'] ?? $_REQUEST['entityType'] ?? '');

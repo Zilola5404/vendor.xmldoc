@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Contract;
+namespace Ooofix\Xmlupd\Contract;
 
 /** Контракт настроек модуля (для DI и unit-тестов). */
 interface ConfigInterface
@@ -34,4 +34,7 @@ interface ConfigInterface
     public function xmlFormatVersion(): string;
 
     public function xsdSchemaRevision(): string;
+
+    /** 1C | BITRIX24 */
+    public function calculationMode(): string;
 }

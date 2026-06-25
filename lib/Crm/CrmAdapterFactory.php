@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
-use Vendor\Xmldoc\Cloud\Crm\CloudCrmAdapter;
-use Vendor\Xmldoc\Contract\CrmAdapterInterface;
-use Vendor\Xmldoc\Environment\PortalEnvironment;
+use Ooofix\Xmlupd\Cloud\Crm\CloudCrmAdapter;
+use Ooofix\Xmlupd\Contract\CrmAdapterInterface;
+use Ooofix\Xmlupd\Environment\PortalEnvironment;
 
 final class CrmAdapterFactory
 {

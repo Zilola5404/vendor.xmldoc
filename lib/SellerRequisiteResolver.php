@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\RequisiteTable;

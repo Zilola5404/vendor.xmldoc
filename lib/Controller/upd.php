@@ -1,18 +1,18 @@
 <?php
 
-namespace Vendor\Xmldoc\Controller;
+namespace Ooofix\Xmlupd\Controller;
 
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\CrmPermissions;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\GenerateResult;
-use Vendor\Xmldoc\Dto\EntityContextDto;
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
-use Vendor\Xmldoc\GenerateService;
+use Ooofix\Xmlupd\CrmPermissions;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\GenerateResult;
+use Ooofix\Xmlupd\Dto\EntityContextDto;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\GenerateService;
 
-/** AJAX: vendor.xml:upd.generate */
+/** AJAX: ooofix.xmlupd:upd.generate */
 class Upd extends Controller
 {
     public function configureActions(): array
@@ -29,8 +29,8 @@ class Upd extends Controller
 
     public function generateAction(string $entityType, int $entityId): array
     {
-        if (!Loader::includeModule('vendor.xml') || !Loader::includeModule('crm')) {
-            return GenerateResult::fail(['Модуль vendor.xml или CRM не установлен'])->toArray();
+        if (!Loader::includeModule('ooofix.xmlupd') || !Loader::includeModule('crm')) {
+            return GenerateResult::fail(['Модуль ooofix.xmlupd или CRM не установлен'])->toArray();
         }
 
         if (!CrmPermissions::canGenerate($entityType, $entityId)) {

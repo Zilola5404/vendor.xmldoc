@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Address;
+namespace Ooofix\Xmlupd\Address;
 
 /** Код субъекта РФ (КодРегион) для узла АдрРФ — 2 цифры по ФНС. */
 final class RegionCodeResolver

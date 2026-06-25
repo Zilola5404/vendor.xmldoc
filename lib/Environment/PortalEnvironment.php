@@ -1,17 +1,18 @@
 <?php
 
-namespace Vendor\Xmldoc\Environment;
+namespace Ooofix\Xmlupd\Environment;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
-use Vendor\Xmldoc\Cloud\CloudGenerateRuntime;
-use Vendor\Xmldoc\Config;
-use Vendor\Xmldoc\Install\InstallEnvironment;
+use Ooofix\Xmlupd\Cloud\CloudGenerateRuntime;
+use Ooofix\Xmlupd\Config;
+use Ooofix\Xmlupd\ModuleInfo;
+use Ooofix\Xmlupd\Install\InstallEnvironment;
 
 /** Определение типа портала: облако / коробка. */
 final class PortalEnvironment
 {
-    private const MODULE = 'vendor.xml';
+    private const MODULE = ModuleInfo::MODULE_ID;
 
     public static function crmAdapterMode(): string
     {

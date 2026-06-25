@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
 use Bitrix\Main\Loader;
 

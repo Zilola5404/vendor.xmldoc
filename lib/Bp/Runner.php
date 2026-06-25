@@ -1,18 +1,18 @@
 <?php
 
-namespace Vendor\Xmldoc\Bp;
+namespace Ooofix\Xmlupd\Bp;
 
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\GenerateService;
-use Vendor\Xmldoc\Dto\EntityContextDto;
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\GenerateService;
+use Ooofix\Xmlupd\Dto\EntityContextDto;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
 
 /**
  * Запуск генерации УПД из PHP-кода бизнес-процесса.
  * Рекомендуется activity «Сформировать УПД (XML)» в дизайнере роботов (v1.3.0+).
  *
  * Пример:
- * \Vendor\Xmldoc\Bp\Runner::fromDeal({=Document:ID});
+ * \Ooofix\Xmlupd\Bp\Runner::fromDeal({=Document:ID});
  */
 class Runner
 {
@@ -28,8 +28,8 @@ class Runner
 
     public static function run(string $entityType, int $entityId): array
     {
-        if (!\Bitrix\Main\Loader::includeModule('vendor.xml')) {
-            return ['success' => false, 'message' => 'Модуль vendor.xml не установлен'];
+        if (!\Bitrix\Main\Loader::includeModule('ooofix.xmlupd')) {
+            return ['success' => false, 'message' => 'Модуль ooofix.xmlupd не установлен'];
         }
 
         $service = new GenerateService();

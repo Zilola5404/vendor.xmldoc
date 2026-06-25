@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 /**
  * Конвертация XML: UTF-8 (генерация) → windows-1251 (файл / Диадок).

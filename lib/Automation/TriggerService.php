@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Automation;
+namespace Ooofix\Xmlupd\Automation;
 
-use Vendor\Xmldoc\Crm\CrmAdapterFactory;
-use Vendor\Xmldoc\DocumentTypeRegistry;
-use Vendor\Xmldoc\Logger;
+use Ooofix\Xmlupd\Crm\CrmAdapterFactory;
+use Ooofix\Xmlupd\DocumentTypeRegistry;
+use Ooofix\Xmlupd\Logger;
 
 /** Запуск триггеров CRM автоматизации. */
 final class TriggerService

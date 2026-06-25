@@ -1,11 +1,12 @@
 <?php
 
-namespace Vendor\Xmldoc\Cloud\Crm;
+namespace Ooofix\Xmlupd\Cloud\Crm;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\Contract\CrmAdapterInterface;
-use Vendor\Xmldoc\DocumentTypeRegistry;
+use Ooofix\Xmlupd\Contract\CrmAdapterInterface;
+use Ooofix\Xmlupd\DocumentTypeRegistry;
+use Ooofix\Xmlupd\ModuleInfo;
 
 /**
  * Адаптер CRM для облачного Б24.
@@ -13,7 +14,7 @@ use Vendor\Xmldoc\DocumentTypeRegistry;
  */
 final class CloudCrmAdapter implements CrmAdapterInterface
 {
-    private const MODULE = 'vendor.xml';
+    private const MODULE = ModuleInfo::MODULE_ID;
 
     public function isCloud(): bool
     {

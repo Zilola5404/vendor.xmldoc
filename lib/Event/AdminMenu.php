@@ -1,43 +1,45 @@
 <?php
 
-namespace Vendor\Xmldoc\Event;
+namespace Ooofix\Xmlupd\Event;
 
-/** Пункты меню админки */
+use Ooofix\Xmlupd\ModuleInfo;
+
+/** Пункты меню админки (только административные страницы). */
 class AdminMenu
 {
     public static function onBuildGlobalMenu(array &$globalMenu, array &$moduleMenu): void
     {
         global $APPLICATION;
 
-        if ($APPLICATION->GetGroupRight('vendor.xml') < 'R') {
+        if ($APPLICATION->GetGroupRight('ooofix.xmlupd') < 'R') {
             return;
         }
 
         $moduleMenu[] = [
             'parent_menu' => 'global_menu_settings',
-            'section'     => 'vendor_xml',
+            'section'     => 'ooofix_xmlupd',
             'sort'        => 1200,
             'text'        => 'XML УПД',
-            'title'       => 'Генерация XML УПД',
+            'title'       => ModuleInfo::MODULE_TITLE,
             'icon'        => 'fileman_menu_icon',
             'page_icon'   => 'fileman_page_icon',
-            'items_id'    => 'menu_vendor_xml',
+            'items_id'    => 'menu_ooofix_xmlupd',
             'items'       => [
                 [
-                    'text'     => 'Настройки',
-                    'url'      => 'settings.php?mid=vendor.xml&lang=' . LANGUAGE_ID,
-                    'title'    => 'Настройки модуля vendor.xml',
+                    'text'     => 'Настройки XML',
+                    'url'      => 'settings.php?mid=ooofix.xmlupd&lang=' . LANGUAGE_ID,
+                    'title'    => 'Настройки: ' . ModuleInfo::MODULE_TITLE,
                     'more_url' => [],
                 ],
                 [
                     'text'     => 'История документов',
-                    'url'      => 'vendor_xml_documents.php?lang=' . LANGUAGE_ID,
+                    'url'      => 'ooofix_xmlupd_documents.php?lang=' . LANGUAGE_ID,
                     'title'    => 'Реестр версий УПД',
                     'more_url' => [],
                 ],
                 [
                     'text'     => 'Журнал генерации',
-                    'url'      => 'vendor_xml_log.php?lang=' . LANGUAGE_ID,
+                    'url'      => 'ooofix_xmlupd_log.php?lang=' . LANGUAGE_ID,
                     'title'    => 'Лог b_xmldoc_log',
                     'more_url' => [],
                 ],

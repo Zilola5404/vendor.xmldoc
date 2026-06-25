@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Xml;
+namespace Ooofix\Xmlupd\Xml;
 
 /** Форматирование ошибок libxml для пользователя и журнала. */
 final class XsdErrorFormatter

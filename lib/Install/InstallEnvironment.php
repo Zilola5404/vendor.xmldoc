@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Install;
+namespace Ooofix\Xmlupd\Install;
 
 use Bitrix\Main\Config\Option;
-use Vendor\Xmldoc\Cloud\Crm\SmartInvoiceTypeResolver;
-use Vendor\Xmldoc\Environment\PortalEnvironment;
+use Ooofix\Xmlupd\Cloud\Crm\SmartInvoiceTypeResolver;
+use Ooofix\Xmlupd\Environment\PortalEnvironment;
 
 /** Определение окружения и post-install настройки (коробка / облако). */
 final class InstallEnvironment

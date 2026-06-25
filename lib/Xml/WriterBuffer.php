@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Xml;
+namespace Ooofix\Xmlupd\Xml;
 
 /**
  * Потоковая генерация XML через ext-xmlwriter с fallback на DOMDocument (ext-dom).

@@ -1,13 +1,13 @@
 <?php
 
-namespace Vendor\Xmldoc\Cloud\Crm;
+namespace Ooofix\Xmlupd\Cloud\Crm;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\Crm\CrmEntityWriter;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\Install\UserFieldInstaller;
-use Vendor\Xmldoc\Logger;
+use Ooofix\Xmlupd\Crm\CrmEntityWriter;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\Install\UserFieldInstaller;
+use Ooofix\Xmlupd\Logger;
 
 /** Запись UF_UPD_FILE через CRM Service API (облако). */
 final class CloudCrmEntityWriter

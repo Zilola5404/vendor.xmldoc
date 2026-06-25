@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
-use Vendor\Xmldoc\Dto\EntityContextDto;
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
-use Vendor\Xmldoc\Runtime\RuntimeFactory;
+use Ooofix\Xmlupd\Dto\EntityContextDto;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\Runtime\RuntimeFactory;
 
 /** Оркестратор: делегирует генерацию runtime коробки или облака. */
 class GenerateService

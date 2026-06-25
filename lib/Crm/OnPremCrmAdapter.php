@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\Contract\CrmAdapterInterface;
-use Vendor\Xmldoc\DocumentTypeRegistry;
+use Ooofix\Xmlupd\Contract\CrmAdapterInterface;
+use Ooofix\Xmlupd\DocumentTypeRegistry;
 
 /** Адаптер CRM для коробочной установки. */
 final class OnPremCrmAdapter implements CrmAdapterInterface

@@ -1,11 +1,11 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use DOMDocument;
-use Vendor\Xmldoc\Xml\XsdErrorFormatter;
-use Vendor\Xmldoc\Xml\XsdSchemaRegistry;
-use Vendor\Xmldoc\Xml\XmlValidationException;
+use Ooofix\Xmlupd\Xml\XsdErrorFormatter;
+use Ooofix\Xmlupd\Xml\XsdSchemaRegistry;
+use Ooofix\Xmlupd\Xml\XmlValidationException;
 
 /**
  * XSD-валидация XML УПД по официальным схемам ФНС (локально в config/schemas).

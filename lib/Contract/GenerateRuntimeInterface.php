@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\Xmldoc\Contract;
+namespace Ooofix\Xmlupd\Contract;
 
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
-use Vendor\Xmldoc\GenerateResult;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\GenerateResult;
 
 /** Контракт runtime генерации УПД (коробка / облако). */
 interface GenerateRuntimeInterface

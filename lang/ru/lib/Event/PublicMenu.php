@@ -1,0 +1,7 @@
+<?php
+
+global $MESS;
+$MESS['OOOFIX_XMLUPD_PUBLIC_MENU_ROOT']      = 'XML Документы';
+$MESS['OOOFIX_XMLUPD_PUBLIC_MENU_DOCUMENTS'] = 'Документы';
+$MESS['OOOFIX_XMLUPD_PUBLIC_MENU_SETTINGS']  = 'Настройки';
+$MESS['OOOFIX_XMLUPD_PUBLIC_MENU_LOGS']      = 'Логи';

@@ -1,12 +1,12 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\Install\UserFieldInstaller;
-use Vendor\Xmldoc\Logger;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\Install\UserFieldInstaller;
+use Ooofix\Xmlupd\Logger;
 
 /** Запись UF_UPD_FILE в карточку CRM (коробка: CCrmDeal + Factory для СП). */
 final class CrmEntityWriter

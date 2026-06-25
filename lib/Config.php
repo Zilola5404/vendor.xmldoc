@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
-use Vendor\Xmldoc\Contract\ConfigInterface;
+use Ooofix\Xmlupd\Contract\ConfigInterface;
 
 /** Настройки модуля из b_option (фасад над ConfigInterface). */
 class Config
@@ -92,5 +92,10 @@ class Config
     public static function xsdSchemaRevision(): string
     {
         return self::i()->xsdSchemaRevision();
+    }
+
+    public static function calculationMode(): string
+    {
+        return self::i()->calculationMode();
     }
 }

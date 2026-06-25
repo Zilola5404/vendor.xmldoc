@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Type\DateTime;
+use Ooofix\Xmlupd\Internal\Db;
 
 /** Журнал операций в b_xmldoc_log */
 class Logger
@@ -16,17 +16,28 @@ class Logger
     public static function write(string $entityType, int $entityId, string $status, string $message = ''): void
     {
         try {
-            $connection = Application::getConnection();
-            $sqlHelper = $connection->getSqlHelper();
-            $createdAt = $sqlHelper->getDateTimeFunction(new DateTime());
-
-            $connection->queryExecute(
-                "INSERT INTO b_xmldoc_log (ENTITY_TYPE, ENTITY_ID, STATUS, MESSAGE, CREATED_AT)
-                 VALUES (?, ?, ?, ?, {$createdAt})",
-                [$entityType, $entityId, $status, $message]
-            );
+            Db::insert('b_xmldoc_log', [
+                'ENTITY_TYPE' => $entityType,
+                'ENTITY_ID'   => $entityId,
+                'STATUS'      => $status,
+                'MESSAGE'     => $message,
+                'CREATED_AT'  => new \Bitrix\Main\Type\DateTime(),
+            ]);
         } catch (\Throwable) {
-            // Лог не должен прерывать генерацию
+            try {
+                $helper = Application::getConnection()->getSqlHelper();
+                Application::getConnection()->queryExecute(
+                    'INSERT INTO b_xmldoc_log (ENTITY_TYPE, ENTITY_ID, STATUS, MESSAGE, CREATED_AT) VALUES ('
+                    . "'" . $helper->forSql($entityType) . "', "
+                    . (int)$entityId . ", "
+                    . "'" . $helper->forSql($status) . "', "
+                    . "'" . $helper->forSql($message) . "', "
+                    . Db::nowExpression()
+                    . ')'
+                );
+            } catch (\Throwable) {
+                // Лог не должен прерывать генерацию
+            }
         }
     }
 
@@ -38,34 +49,20 @@ class Logger
         $limit = max(1, min(500, $limit));
 
         try {
-            $connection = Application::getConnection();
-            $sqlHelper = $connection->getSqlHelper();
-
+            $helper = Application::getConnection()->getSqlHelper();
             $where = '1=1';
-            $params = [];
 
             if ($entityType !== null && $entityType !== '') {
-                $where .= ' AND ENTITY_TYPE = ?';
-                $params[] = $entityType;
+                $where .= " AND ENTITY_TYPE = '" . $helper->forSql($entityType) . "'";
             }
             if ($entityId !== null && $entityId > 0) {
-                $where .= ' AND ENTITY_ID = ?';
-                $params[] = $entityId;
+                $where .= ' AND ENTITY_ID = ' . (int)$entityId;
             }
 
-            $params[] = $limit;
-
-            $rows = [];
-            $result = $connection->query(
-                "SELECT * FROM b_xmldoc_log WHERE {$where} ORDER BY ID DESC LIMIT ?",
-                $params
+            return Db::fetchAll(
+                'SELECT * FROM b_xmldoc_log WHERE ' . $where
+                . ' ORDER BY ID DESC LIMIT ' . (int)$limit
             );
-
-            while ($row = $result->fetch()) {
-                $rows[] = $row;
-            }
-
-            return $rows;
         } catch (\Throwable) {
             return [];
         }

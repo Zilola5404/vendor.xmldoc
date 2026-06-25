@@ -10,16 +10,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 IncludeModuleLangFile(__FILE__);
 
-class vendor_xml extends CModule
+class ooofix_xmlupd extends CModule
 {
-    public $MODULE_ID = 'vendor.xml';
+    public $MODULE_ID = 'ooofix.xmlupd';
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
     public $MODULE_NAME;
     public $MODULE_DESCRIPTION;
-    public $PARTNER_NAME = 'Vendor';
-    public $PARTNER_URI = '';
-    public $MODULE_GROUP_RIGHTS = 'N';
+    public $PARTNER_NAME = 'ООО "РЕШЕНИЕ"';
+    public $PARTNER_URI = 'https://ooofix.ru';
+    public $MODULE_GROUP_RIGHTS = 'Y';
 
     public function __construct()
     {
@@ -28,8 +28,8 @@ class vendor_xml extends CModule
 
         $this->MODULE_VERSION      = $arModuleVersion['VERSION'];
         $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
-        $this->MODULE_NAME         = GetMessage('VENDOR_XMLDOC_MODULE_NAME');
-        $this->MODULE_DESCRIPTION  = GetMessage('VENDOR_XMLDOC_MODULE_DESCRIPTION');
+        $this->MODULE_NAME         = GetMessage('OOOFIX_XMLUPD_MODULE_NAME');
+        $this->MODULE_DESCRIPTION  = GetMessage('OOOFIX_XMLUPD_MODULE_DESCRIPTION');
     }
 
     public function DoInstall()
@@ -72,9 +72,13 @@ class vendor_xml extends CModule
         $this->InstallFiles();
         $this->InstallActivities();
         $this->InstallTriggers();
+        $this->migrateFromLegacySolution();
+        $this->cleanupLegacyPortalPaths();
         $this->InstallOptions();
         $this->InstallUserFields();
         $this->applyInstallEnvironment();
+        $this->installInfrastructure();
+        $this->installPortalPublicPages();
 
         return true;
     }
@@ -85,10 +89,14 @@ class vendor_xml extends CModule
         $this->InstallFiles();
         $this->InstallActivities();
         $this->InstallTriggers();
+        $this->migrateFromLegacySolution();
+        $this->cleanupLegacyPortalPaths();
         $this->InstallOptions();
         $this->InstallUserFields();
         $this->upgradeDocumentTable();
         $this->applyInstallEnvironment();
+        $this->installInfrastructure();
+        $this->installPortalPublicPages();
 
         return true;
     }
@@ -162,7 +170,7 @@ class vendor_xml extends CModule
             'main',
             'OnProlog',
             $this->MODULE_ID,
-            'Vendor\\Xmldoc\\Event\\Ui',
+            'Ooofix\\Xmlupd\\Event\\Ui',
             'onProlog'
         );
 
@@ -170,7 +178,7 @@ class vendor_xml extends CModule
             'main',
             'OnEpilog',
             $this->MODULE_ID,
-            'Vendor\\Xmldoc\\Event\\Ui',
+            'Ooofix\\Xmlupd\\Event\\Ui',
             'onEpilog'
         );
 
@@ -178,8 +186,32 @@ class vendor_xml extends CModule
             'main',
             'OnBuildGlobalMenu',
             $this->MODULE_ID,
-            'Vendor\\Xmldoc\\Event\\AdminMenu',
+            'Ooofix\\Xmlupd\\Event\\AdminMenu',
             'onBuildGlobalMenu'
+        );
+
+        EventManager::getInstance()->registerEventHandler(
+            'main',
+            'OnBuildMenu',
+            $this->MODULE_ID,
+            'Ooofix\\Xmlupd\\Event\\PublicMenu',
+            'onBuildMenu'
+        );
+
+        EventManager::getInstance()->registerEventHandler(
+            'crm',
+            'OnAfterCrmControlPanelBuild',
+            $this->MODULE_ID,
+            'Ooofix\\Xmlupd\\Event\\CrmMenu',
+            'onAfterCrmControlPanelBuild'
+        );
+
+        EventManager::getInstance()->registerEventHandlerCompatible(
+            'crm',
+            'OnAfterCrmControlPanelBuild',
+            $this->MODULE_ID,
+            'Ooofix\\Xmlupd\\Event\\CrmMenu',
+            'onAfterCrmControlPanelBuild'
         );
 
         foreach ($this->getAutomationTriggerClasses() as $sort => $triggerClass) {
@@ -187,7 +219,7 @@ class vendor_xml extends CModule
                 'crm',
                 'OnAutomationTriggerList',
                 $this->MODULE_ID,
-                'Vendor\\Xmldoc\\Event\\CrmAutomation',
+                'Ooofix\\Xmlupd\\Event\\CrmAutomation',
                 'appendTrigger',
                 100 + $sort,
                 '',
@@ -206,8 +238,8 @@ class vendor_xml extends CModule
 
         $this->ensureModuleAutoload();
 
-        if (class_exists(\Vendor\Xmldoc\Automation\TriggerRegistry::class)) {
-            \Vendor\Xmldoc\Automation\TriggerRegistry::installAll();
+        if (class_exists(\Ooofix\Xmlupd\Automation\TriggerRegistry::class)) {
+            \Ooofix\Xmlupd\Automation\TriggerRegistry::installAll();
         }
 
         return true;
@@ -215,8 +247,14 @@ class vendor_xml extends CModule
 
     public function UnInstallEvents()
     {
-        $this->unRegisterUiEvents();
         $this->unRegisterAutomationEvents();
+        $this->unRegisterUiEvents();
+
+        $lib = dirname(__DIR__) . '/lib/Install/EventInstaller.php';
+        if (is_file($lib)) {
+            require_once $lib;
+            \Ooofix\Xmlupd\Install\EventInstaller::uninstallAll($this->MODULE_ID);
+        }
 
         return true;
     }
@@ -228,7 +266,7 @@ class vendor_xml extends CModule
                 'crm',
                 'OnAutomationTriggerList',
                 $this->MODULE_ID,
-                'Vendor\\Xmldoc\\Event\\CrmAutomation',
+                'Ooofix\\Xmlupd\\Event\\CrmAutomation',
                 'appendTrigger',
                 '',
                 [$triggerClass]
@@ -239,16 +277,14 @@ class vendor_xml extends CModule
     private function unRegisterUiEvents(): void
     {
         $events = [
-            ['main', 'OnProlog', 'onProlog'],
-            ['main', 'OnEpilog', 'onEpilog'],
-            ['main', 'OnBuildGlobalMenu', 'onBuildGlobalMenu'],
+            ['main', 'OnProlog', 'Ooofix\\Xmlupd\\Event\\Ui', 'onProlog'],
+            ['main', 'OnEpilog', 'Ooofix\\Xmlupd\\Event\\Ui', 'onEpilog'],
+            ['main', 'OnBuildGlobalMenu', 'Ooofix\\Xmlupd\\Event\\AdminMenu', 'onBuildGlobalMenu'],
+            ['main', 'OnBuildMenu', 'Ooofix\\Xmlupd\\Event\\PublicMenu', 'onBuildMenu'],
+            ['crm', 'OnAfterCrmControlPanelBuild', 'Ooofix\\Xmlupd\\Event\\CrmMenu', 'onAfterCrmControlPanelBuild'],
         ];
 
-        foreach ($events as [$module, $event, $method]) {
-            $class = $method === 'onBuildGlobalMenu'
-                ? 'Vendor\\Xmldoc\\Event\\AdminMenu'
-                : 'Vendor\\Xmldoc\\Event\\Ui';
-
+        foreach ($events as [$module, $event, $class, $method]) {
             EventManager::getInstance()->unRegisterEventHandler(
                 $module,
                 $event,
@@ -256,6 +292,18 @@ class vendor_xml extends CModule
                 $class,
                 $method
             );
+
+            if ($event === 'OnAfterCrmControlPanelBuild'
+                && method_exists(EventManager::getInstance(), 'unRegisterEventHandlerCompatible')
+            ) {
+                EventManager::getInstance()->unRegisterEventHandlerCompatible(
+                    $module,
+                    $event,
+                    $this->MODULE_ID,
+                    $class,
+                    $method
+                );
+            }
         }
     }
 
@@ -267,12 +315,12 @@ class vendor_xml extends CModule
         }
 
         include $defaultsFile;
-        if (empty($vendor_xml_default_option) || !is_array($vendor_xml_default_option)) {
+        if (empty($ooofix_xmlupd_default_option) || !is_array($ooofix_xmlupd_default_option)) {
             return true;
         }
 
-        foreach ($vendor_xml_default_option as $name => $value) {
-            $marker = '__XMLDOC_UNSET__';
+        foreach ($ooofix_xmlupd_default_option as $name => $value) {
+            $marker = '__OOOFIX_XMLUPD_UNSET__';
             if (\Bitrix\Main\Config\Option::get($this->MODULE_ID, $name, $marker) === $marker) {
                 \Bitrix\Main\Config\Option::set($this->MODULE_ID, $name, (string)$value);
             }
@@ -287,7 +335,7 @@ class vendor_xml extends CModule
 
     public function InstallActivities()
     {
-        $source = __DIR__ . '/activities/xmldocgenerateupd';
+        $source = __DIR__ . '/activities/ooofixxmlupdgenerate';
         if (!is_dir($source)) {
             return true;
         }
@@ -307,7 +355,7 @@ class vendor_xml extends CModule
 
             CopyDirFiles(
                 $source,
-                $root . '/xmldocgenerateupd',
+                $root . '/ooofixxmlupdgenerate',
                 true,
                 true
             );
@@ -319,6 +367,8 @@ class vendor_xml extends CModule
     public function UnInstallActivities()
     {
         foreach ([
+            '/local/activities/ooofixxmlupdgenerate',
+            '/bitrix/activities/ooofixxmlupdgenerate',
             '/local/activities/xmldocgenerateupd',
             '/bitrix/activities/xmldocgenerateupd',
         ] as $relPath) {
@@ -342,7 +392,7 @@ class vendor_xml extends CModule
 
         CopyDirFiles(
             __DIR__ . '/js',
-            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/vendor/xmldoc',
+            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/ooofix/xmlupd',
             true,
             true
         );
@@ -354,7 +404,75 @@ class vendor_xml extends CModule
             false
         );
 
+        $cssTarget = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/css/ooofix/xmlupd';
+        if (!is_dir($cssTarget)) {
+            mkdir($cssTarget, BX_DIR_PERMISSIONS, true);
+        }
+
+        CopyDirFiles(
+            __DIR__ . '/css',
+            $cssTarget,
+            true,
+            true
+        );
+
+        $crmPublic = __DIR__ . '/public/crm/ooofix_xmlupd';
+        if (is_dir($crmPublic)) {
+            CopyDirFiles(
+                $crmPublic,
+                $_SERVER['DOCUMENT_ROOT'] . '/crm/ooofix_xmlupd',
+                true,
+                true
+            );
+        }
+
+        $this->installPortalPublicPages();
+
         return true;
+    }
+
+    /**
+     * Публичные страницы раздела в DOCUMENT_ROOT (/crm/ooofix_xmlupd/*).
+     * Логика — в install/public/xml_documents/ модуля.
+     */
+    private function installPortalPublicPages(): void
+    {
+        $installer = dirname(__DIR__) . '/lib/Install/SiteSectionInstaller.php';
+        if (is_file($installer)) {
+            require_once $installer;
+            \Ooofix\Xmlupd\Install\SiteSectionInstaller::install();
+        }
+    }
+
+    private function installInfrastructure(): void
+    {
+        $this->ensureModuleAutoload();
+
+        if (class_exists(\Ooofix\Xmlupd\Install\UrlRewriteInstaller::class)) {
+            \Ooofix\Xmlupd\Install\UrlRewriteInstaller::install($this->MODULE_ID);
+        }
+
+        if (class_exists(\Ooofix\Xmlupd\Install\ModuleRightsInstaller::class)) {
+            \Ooofix\Xmlupd\Install\ModuleRightsInstaller::install($this->MODULE_ID);
+        }
+
+        if (class_exists(\Ooofix\Xmlupd\Install\LeftMenuExtInstaller::class)) {
+            \Ooofix\Xmlupd\Install\LeftMenuExtInstaller::install();
+        }
+
+        if (class_exists(\Ooofix\Xmlupd\Install\InitPhpInstaller::class)) {
+            \Ooofix\Xmlupd\Install\InitPhpInstaller::install();
+        }
+    }
+
+    private function uninstallInfrastructure(): void
+    {
+        $libDir = dirname(__DIR__) . '/lib/Install';
+        $urlRewrite = $libDir . '/UrlRewriteInstaller.php';
+        if (is_file($urlRewrite)) {
+            require_once $urlRewrite;
+            \Ooofix\Xmlupd\Install\UrlRewriteInstaller::uninstall();
+        }
     }
 
     public function UnInstallFiles()
@@ -364,14 +482,65 @@ class vendor_xml extends CModule
             $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin'
         );
 
+        if (is_dir($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/ooofix/xmlupd')) {
+            DeleteDirFilesEx('/bitrix/js/ooofix/xmlupd');
+        }
+
         if (is_dir($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/vendor/xmldoc')) {
             DeleteDirFilesEx('/bitrix/js/vendor/xmldoc');
         }
 
-        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/vendor_xml_generate.php';
+        $toolsFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/ooofix_xmlupd_generate.php';
         if (is_file($toolsFile)) {
             @unlink($toolsFile);
         }
+
+        foreach ([
+            'ooofix_xmlupd_settings_api.php',
+            'vendor_xml_generate.php',
+            'ooofix_vendor_xml_generate.php',
+            'ooofix_vendor_xml_settings_api.php',
+        ] as $toolName) {
+            $path = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/' . $toolName;
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        if (is_dir($_SERVER['DOCUMENT_ROOT'] . '/bitrix/css/ooofix/xmlupd')) {
+            DeleteDirFilesEx('/bitrix/css/ooofix/xmlupd');
+        }
+
+        if (is_dir($_SERVER['DOCUMENT_ROOT'] . '/bitrix/css/ooofix/vendorxml')) {
+            DeleteDirFilesEx('/bitrix/css/ooofix/vendorxml');
+        }
+
+        $portalInstaller = dirname(__DIR__) . '/lib/Install/SiteSectionInstaller.php';
+        if (is_file($portalInstaller)) {
+            require_once $portalInstaller;
+            \Ooofix\Xmlupd\Install\SiteSectionInstaller::uninstall();
+        } else {
+            foreach ([
+                '/crm/ooofix_xmlupd',
+                '/crm/ooofix_vendor_xml',
+                '/crm/xml_documents',
+                '/xml_documents',
+            ] as $relPath) {
+                if (is_dir($_SERVER['DOCUMENT_ROOT'] . $relPath)) {
+                    DeleteDirFilesEx($relPath);
+                }
+            }
+        }
+
+        if (class_exists(\Ooofix\Xmlupd\Install\LeftMenuExtInstaller::class)) {
+            \Ooofix\Xmlupd\Install\LeftMenuExtInstaller::uninstall();
+        }
+
+        if (class_exists(\Ooofix\Xmlupd\Install\InitPhpInstaller::class)) {
+            \Ooofix\Xmlupd\Install\InitPhpInstaller::uninstall();
+        }
+
+        $this->uninstallInfrastructure();
 
         return true;
     }
@@ -382,10 +551,10 @@ class vendor_xml extends CModule
             return true;
         }
 
-        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('vendor.xml', 'smart_invoice_type_id', '31');
+        $smartTypeId = (int)\Bitrix\Main\Config\Option::get('ooofix.xmlupd', 'smart_invoice_type_id', '31');
 
-        if (class_exists(\Vendor\Xmldoc\Install\UserFieldInstaller::class)) {
-            \Vendor\Xmldoc\Install\UserFieldInstaller::installAll($smartTypeId);
+        if (class_exists(\Ooofix\Xmlupd\Install\UserFieldInstaller::class)) {
+            \Ooofix\Xmlupd\Install\UserFieldInstaller::installAll($smartTypeId);
 
             return true;
         }
@@ -435,27 +604,45 @@ class vendor_xml extends CModule
     {
         $this->ensureModuleAutoload();
 
-        if (!class_exists(\Vendor\Xmldoc\Install\InstallEnvironment::class)) {
+        if (!class_exists(\Ooofix\Xmlupd\Install\InstallEnvironment::class)) {
             return;
         }
 
-        \Vendor\Xmldoc\Install\InstallEnvironment::apply($this->MODULE_ID);
+        \Ooofix\Xmlupd\Install\InstallEnvironment::apply($this->MODULE_ID);
     }
 
     /** Подключает autoload модуля (install/index.php не загружает include.php автоматически). */
     private function ensureModuleAutoload(): void
     {
-        if (class_exists(\Vendor\Xmldoc\Automation\TriggerRegistry::class, false)) {
+        if (class_exists(\Ooofix\Xmlupd\Automation\TriggerRegistry::class, false)) {
             return;
         }
 
         Loader::includeModule($this->MODULE_ID);
 
-        if (!class_exists(\Vendor\Xmldoc\Automation\TriggerRegistry::class, false)) {
+        if (!class_exists(\Ooofix\Xmlupd\Automation\TriggerRegistry::class, false)) {
             $includeFile = dirname(__DIR__) . '/include.php';
             if (is_file($includeFile)) {
                 require_once $includeFile;
             }
+        }
+    }
+
+    private function cleanupLegacyPortalPaths(): void
+    {
+        $this->ensureModuleAutoload();
+
+        if (class_exists(\Ooofix\Xmlupd\Install\LegacyModuleMigration::class)) {
+            \Ooofix\Xmlupd\Install\LegacyModuleMigration::cleanupLegacyArtifacts();
+        }
+    }
+
+    private function migrateFromLegacySolution(): void
+    {
+        $this->ensureModuleAutoload();
+
+        if (class_exists(\Ooofix\Xmlupd\Install\LegacyModuleMigration::class)) {
+            \Ooofix\Xmlupd\Install\LegacyModuleMigration::run($this->MODULE_ID);
         }
     }
 
@@ -469,16 +656,30 @@ class vendor_xml extends CModule
     {
         $this->ensureModuleAutoload();
 
-        if (class_exists(\Vendor\Xmldoc\Automation\TriggerRegistry::class)) {
-            return \Vendor\Xmldoc\Automation\TriggerRegistry::triggerClasses();
+        if (class_exists(\Ooofix\Xmlupd\Automation\TriggerRegistry::class)) {
+            return \Ooofix\Xmlupd\Automation\TriggerRegistry::triggerClasses();
         }
 
         return [
-            'Vendor\\Xmldoc\\Automation\\Trigger\\UpdGeneratedTrigger',
-            'Vendor\\Xmldoc\\Automation\\Trigger\\EdoSentTrigger',
-            'Vendor\\Xmldoc\\Automation\\Trigger\\EdoDeliveredTrigger',
-            'Vendor\\Xmldoc\\Automation\\Trigger\\EdoAcceptedTrigger',
-            'Vendor\\Xmldoc\\Automation\\Trigger\\EdoRejectedTrigger',
+            'Ooofix\\Xmlupd\\Automation\\Trigger\\UpdGeneratedTrigger',
+            'Ooofix\\Xmlupd\\Automation\\Trigger\\EdoSentTrigger',
+            'Ooofix\\Xmlupd\\Automation\\Trigger\\EdoDeliveredTrigger',
+            'Ooofix\\Xmlupd\\Automation\\Trigger\\EdoAcceptedTrigger',
+            'Ooofix\\Xmlupd\\Automation\\Trigger\\EdoRejectedTrigger',
         ];
     }
+}
+
+/**
+ * Права на модуль (Настройки → Права доступа → Права на модуль).
+ *
+ * @return array<string, string>
+ */
+function ooofix_xmlupd_GetModuleRightList(): array
+{
+    return [
+        'D' => GetMessage('OOOFIX_XMLUPD_RIGHT_DENIED'),
+        'R' => GetMessage('OOOFIX_XMLUPD_RIGHT_READ'),
+        'W' => GetMessage('OOOFIX_XMLUPD_RIGHT_WRITE'),
+    ];
 }

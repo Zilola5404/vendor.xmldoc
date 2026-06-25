@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\Xmldoc\Xml;
+namespace Ooofix\Xmlupd\Xml;
 
-use Vendor\Xmldoc\Config;
+use Ooofix\Xmlupd\Config;
 
 /** Локальные XSD-схемы ФНС/Диадок по версии формата УПД (без обращений в интернет). */
 final class XsdSchemaRegistry

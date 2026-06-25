@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Contract;
+namespace Ooofix\Xmlupd\Contract;
 
 /** Заглушка под ЭДО — реализация на этапе 2+ */
 interface EdoGatewayInterface

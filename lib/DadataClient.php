@@ -1,12 +1,12 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Crm\AddressTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
-use Vendor\Xmldoc\Address\RequisiteAddressResolver;
+use Ooofix\Xmlupd\Address\RequisiteAddressResolver;
 
 /**
  * Обогащение реквизитов через DaData по ИНН.

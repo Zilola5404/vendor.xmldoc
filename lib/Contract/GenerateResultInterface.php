@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Contract;
+namespace Ooofix\Xmlupd\Contract;
 
 /** Результат операции генерации */
 interface GenerateResultInterface

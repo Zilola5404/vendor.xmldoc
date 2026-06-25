@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Edo;
+namespace Ooofix\Xmlupd\Edo;
 
-use Vendor\Xmldoc\Automation\TriggerService;
-use Vendor\Xmldoc\DocumentRegistry;
-use Vendor\Xmldoc\DocumentStatus;
+use Ooofix\Xmlupd\Automation\TriggerService;
+use Ooofix\Xmlupd\DocumentRegistry;
+use Ooofix\Xmlupd\DocumentStatus;
 
 /** Обновление статуса ЭДО и запуск CRM-триггеров (заготовка XMLDOC-24). */
 final class EdoStatusService

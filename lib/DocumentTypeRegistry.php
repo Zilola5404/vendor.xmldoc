@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Crm\Integration\BizProc\Document\Dynamic;
 use Bitrix\Crm\Integration\BizProc\Document\SmartInvoice;
@@ -18,6 +18,11 @@ final class DocumentTypeRegistry
 
     /** @var array<string, array<string, mixed>>|null */
     private static ?array $definitions = null;
+
+    public static function resetCache(): void
+    {
+        self::$definitions = null;
+    }
 
     /** @return array<string, array<string, mixed>> */
     public static function all(): array

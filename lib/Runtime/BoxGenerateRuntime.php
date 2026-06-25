@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Runtime;
+namespace Ooofix\Xmlupd\Runtime;
 
-use Vendor\Xmldoc\Crm\CrmEntityWriter;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\FileSaver;
+use Ooofix\Xmlupd\Crm\CrmEntityWriter;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\FileSaver;
 
 /** Runtime генерации УПД для коробочной установки Bitrix24. */
 final class BoxGenerateRuntime extends AbstractGenerateRuntime

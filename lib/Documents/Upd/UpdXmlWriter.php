@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc\Documents\Upd;
+namespace Ooofix\Xmlupd\Documents\Upd;
 
-use Vendor\Xmldoc\ModuleInfo;
-use Vendor\Xmldoc\Address\AddressComponentParser;
-use Vendor\Xmldoc\Xml\WriterBuffer;
+use Ooofix\Xmlupd\ModuleInfo;
+use Ooofix\Xmlupd\Address\AddressComponentParser;
+use Ooofix\Xmlupd\Xml\WriterBuffer;
 
 /**
  * Генерация XML УПД по образцу Diadoc (формат ФНС 5.03).
@@ -23,7 +23,7 @@ class UpdXmlWriter
 
         $w->startElement('Файл');
         $w->writeAttribute('ИдФайл', $this->buildFileId($m));
-        $w->writeAttribute('ВерсФорм', \Vendor\Xmldoc\Config::xmlFormatVersion());
+        $w->writeAttribute('ВерсФорм', \Ooofix\Xmlupd\Config::xmlFormatVersion());
         $w->writeAttribute('ВерсПрог', ModuleInfo::programName());
 
         $w->startElement('Документ');
@@ -179,7 +179,7 @@ class UpdXmlWriter
             return;
         }
 
-        $regionCode = \Vendor\Xmldoc\Address\RegionCodeResolver::resolve(
+        $regionCode = \Ooofix\Xmlupd\Address\RegionCodeResolver::resolve(
             (string)($m[$prefix . 'region_code'] ?? ''),
             (string)($m[$prefix . 'region'] ?? ''),
             (string)($m[$prefix . 'city'] ?? ''),
@@ -302,13 +302,32 @@ class UpdXmlWriter
         $w->writeAttribute('СодОпер', (string)$firstProduct);
         $w->writeAttribute('ДатаПер', (string)$m['doc_date']);
 
-        $w->startElement('ОснПер');
-        $w->writeAttribute('РеквНаимДок', 'Акт');
-        $w->writeAttribute('РеквНомерДок', (string)$m['doc_number']);
-        $w->writeAttribute('РеквДатаДок', (string)$m['doc_date']);
-        $w->endElement();
+        $this->writeTransferBasis($w, $m);
 
         $w->endElement();
+        $w->endElement();
+    }
+
+    /** @param array<string, mixed> $m */
+    private function writeTransferBasis(WriterBuffer $w, array $m): void
+    {
+        $name = trim((string)($m['transfer_basis_name'] ?? ''));
+        $number = trim((string)($m['transfer_basis_number'] ?? ''));
+        $date = trim((string)($m['transfer_basis_date'] ?? ''));
+
+        if ($name !== '' && $number !== '' && $date !== '') {
+            $w->startElement('ОснПер');
+            $w->writeAttribute('РеквНаимДок', $name);
+            $w->writeAttribute('РеквНомерДок', $number);
+            $w->writeAttribute('РеквДатаДок', $date);
+            $w->endElement();
+
+            return;
+        }
+
+        // XSD не допускает пустые атрибуты ОснПер — только признак «без документа-основания»
+        $w->startElement('БезДокОснПер');
+        $w->text('1');
         $w->endElement();
     }
 

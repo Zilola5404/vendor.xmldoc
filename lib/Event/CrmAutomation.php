@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Event;
+namespace Ooofix\Xmlupd\Event;
 
 use Bitrix\Main\EventResult;
 

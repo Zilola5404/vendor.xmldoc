@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Xml;
+namespace Ooofix\Xmlupd\Xml;
 
 /** Ошибка XSD-валидации с детализацией для UI и лога. */
 final class XmlValidationException extends \RuntimeException

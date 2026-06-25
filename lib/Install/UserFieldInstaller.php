@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Install;
+namespace Ooofix\Xmlupd\Install;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;

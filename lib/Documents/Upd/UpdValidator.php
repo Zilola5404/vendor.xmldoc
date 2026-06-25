@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\Xmldoc\Documents\Upd;
+namespace Ooofix\Xmlupd\Documents\Upd;
 
-use Vendor\Xmldoc\Address\RegionCodeResolver;
-use Vendor\Xmldoc\ValidationMessages;
+use Ooofix\Xmlupd\Address\RegionCodeResolver;
+use Ooofix\Xmlupd\ValidationMessages;
 
 /** Проверка обязательных полей и арифметики сумм перед генерацией XML */
 class UpdValidator

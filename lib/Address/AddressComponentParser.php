@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Address;
+namespace Ooofix\Xmlupd\Address;
 
 /** Разбор однострочного адреса CRM и приведение полей к лимитам XSD АдрРФ */
 final class AddressComponentParser

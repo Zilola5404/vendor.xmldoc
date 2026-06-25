@@ -28,12 +28,12 @@
     }
 
     function getDefaultAjaxUrl() {
-        return getSiteDir() + 'local/modules/vendor.xml/ajax/generate.php';
+        return getSiteDir() + 'local/modules/ooofix.xmlupd/ajax/generate.php';
     }
 
     function getSessid() {
-        if (window.XMLDOC_CONFIG && window.XMLDOC_CONFIG.sessid) {
-            return window.XMLDOC_CONFIG.sessid;
+        if (window.OOOFIX_XMLUPD_CONFIG && window.OOOFIX_XMLUPD_CONFIG.sessid) {
+            return window.OOOFIX_XMLUPD_CONFIG.sessid;
         }
         if (window.BX && typeof BX.bitrix_sessid === 'function') {
             return BX.bitrix_sessid();
@@ -51,7 +51,7 @@
             return { entityType: 'deal', entityId: parseInt(dealMatch[1], 10) };
         }
 
-        var smartTypeId = (window.XMLDOC_CONFIG && window.XMLDOC_CONFIG.smartTypeId) || 31;
+        var smartTypeId = (window.OOOFIX_XMLUPD_CONFIG && window.OOOFIX_XMLUPD_CONFIG.smartTypeId) || 31;
         var smartRe = new RegExp('/crm/type/' + smartTypeId + '/details/(\\d+)');
         var smartMatch = full.match(smartRe);
         if (smartMatch && parseInt(smartMatch[1], 10) > 0) {
@@ -88,7 +88,7 @@
                 return { entityType: 'deal', entityId: entityId };
             }
 
-            var smartTypeId = (window.XMLDOC_CONFIG && window.XMLDOC_CONFIG.smartTypeId) || 0;
+            var smartTypeId = (window.OOOFIX_XMLUPD_CONFIG && window.OOOFIX_XMLUPD_CONFIG.smartTypeId) || 0;
             if (smartTypeId > 0 && entityTypeId === smartTypeId) {
                 return { entityType: 'smart_invoice', entityId: entityId };
             }
@@ -98,7 +98,7 @@
     }
 
     function resolveConfig() {
-        var base = window.XMLDOC_CONFIG || {};
+        var base = window.OOOFIX_XMLUPD_CONFIG || {};
         var parsed = parseEntityFromUrl() || parseEntityFromCrmEditor();
 
         if (!parsed && base.entityType && base.entityId > 0) {
@@ -115,7 +115,54 @@
             ajaxUrl: base.ajaxUrl || getDefaultAjaxUrl(),
             sessid: base.sessid || getSessid(),
             smartTypeId: base.smartTypeId || 31,
+            canGenerate: base.canGenerate !== false,
+            canSettings: base.canSettings === true,
+            settingsUrl: base.settingsUrl || '',
+            settingsLabel: base.settingsLabel || 'Настройки УПД',
+            generateLabel: base.generateLabel || 'Сформировать УПД',
         };
+    }
+
+    function openSettings(url) {
+        if (!url) {
+            return;
+        }
+        if (window.BX && BX.SidePanel && typeof BX.SidePanel.Instance.open === 'function') {
+            BX.SidePanel.Instance.open(url, { width: 900, cacheable: false });
+            return;
+        }
+        window.location.href = url.replace(/[&?]IFRAME=Y.*$/, '');
+    }
+
+    function createSettingsButton(cfg) {
+        var label = cfg.settingsLabel || 'Настройки УПД';
+        if (window.BX && typeof BX.create === 'function') {
+            return BX.create('button', {
+                props: {
+                    id: 'ooofix-xmlupd-settings-btn',
+                    className: 'ui-btn ui-btn-light-border ui-btn-sm ooofix-xmlupd-settings-toolbar',
+                    type: 'button',
+                    title: label,
+                },
+                text: label,
+                events: {
+                    click: function () {
+                        openSettings(cfg.settingsUrl);
+                    },
+                },
+            });
+        }
+
+        var btn = document.createElement('button');
+        btn.id = 'ooofix-xmlupd-settings-btn';
+        btn.type = 'button';
+        btn.className = 'ui-btn ui-btn-light-border ui-btn-sm ooofix-xmlupd-settings-toolbar';
+        btn.textContent = label;
+        btn.title = label;
+        btn.addEventListener('click', function () {
+            openSettings(cfg.settingsUrl);
+        });
+        return btn;
     }
 
     function showMessage(text, isError, extraLines) {
@@ -145,7 +192,7 @@
     }
 
     function removeLegacyFloatingButtons() {
-        document.querySelectorAll('#xmldoc-generate-btn-float, .xmldoc-generate-floating').forEach(function (el) {
+        document.querySelectorAll('#ooofix-xmlupd-generate-btn-float, .ooofix-xmlupd-generate-floating').forEach(function (el) {
             el.remove();
         });
     }
@@ -154,12 +201,12 @@
         if (window.BX && typeof BX.create === 'function') {
             return BX.create('button', {
                 props: {
-                    id: 'xmldoc-generate-btn',
-                    className: 'ui-btn ui-btn-primary ui-btn-sm xmldoc-generate-toolbar',
+                    id: 'ooofix-xmlupd-generate-btn',
+                    className: 'ui-btn ui-btn-primary ui-btn-sm ooofix-xmlupd-generate-toolbar',
                     type: 'button',
-                    title: 'Сформировать УПД',
+                    title: cfg.generateLabel || 'Сформировать УПД',
                 },
-                text: 'Сформировать УПД',
+                text: cfg.generateLabel || 'Сформировать УПД',
                 events: {
                     click: function () {
                         generate(cfg);
@@ -169,11 +216,11 @@
         }
 
         var btn = document.createElement('button');
-        btn.id = 'xmldoc-generate-btn';
+        btn.id = 'ooofix-xmlupd-generate-btn';
         btn.type = 'button';
-        btn.className = 'ui-btn ui-btn-primary ui-btn-sm xmldoc-generate-toolbar';
-        btn.textContent = 'Сформировать УПД';
-        btn.title = 'Сформировать УПД';
+        btn.className = 'ui-btn ui-btn-primary ui-btn-sm ooofix-xmlupd-generate-toolbar';
+        btn.textContent = cfg.generateLabel || 'Сформировать УПД';
+        btn.title = cfg.generateLabel || 'Сформировать УПД';
         btn.addEventListener('click', function () {
             generate(cfg);
         });
@@ -286,7 +333,9 @@
     function injectButton(cfg) {
         removeLegacyFloatingButtons();
 
-        if (document.getElementById('xmldoc-generate-btn')) {
+        var hasGenerate = !!document.getElementById('ooofix-xmlupd-generate-btn');
+        var hasSettings = !!document.getElementById('ooofix-xmlupd-settings-btn');
+        if (hasGenerate && (!cfg.canSettings || hasSettings)) {
             return true;
         }
 
@@ -295,7 +344,14 @@
             return false;
         }
 
-        toolbar.insertBefore(createButton(cfg), toolbar.firstChild);
+        if (cfg.canSettings && cfg.settingsUrl && !hasSettings) {
+            toolbar.insertBefore(createSettingsButton(cfg), toolbar.firstChild);
+        }
+
+        if (cfg.canGenerate !== false && !hasGenerate) {
+            toolbar.insertBefore(createButton(cfg), toolbar.firstChild);
+        }
+
         return true;
     }
 
@@ -342,8 +398,8 @@
             return;
         }
 
-        window.XMLDOC_CONFIG = cfg;
-        window.XMLDOC_JS_VERSION = SCRIPT_VERSION;
+        window.OOOFIX_XMLUPD_CONFIG = cfg;
+        window.OOOFIX_XMLUPD_JS_VERSION = SCRIPT_VERSION;
 
         if (window.BX && typeof BX.ready === 'function') {
             BX.ready(function () {

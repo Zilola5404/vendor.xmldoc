@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Xml;
+namespace Ooofix\Xmlupd\Xml;
 
 use DOMDocument;
 

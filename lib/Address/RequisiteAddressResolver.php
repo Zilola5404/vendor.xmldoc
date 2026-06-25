@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Address;
+namespace Ooofix\Xmlupd\Address;
 
 use Bitrix\Crm\AddressTable;
 use Bitrix\Main\Loader;

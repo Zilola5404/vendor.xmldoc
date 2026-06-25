@@ -1,10 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
-use Vendor\Xmldoc\Crm\CrmEntityWriter;
-use Vendor\Xmldoc\Crm\DiskStorage;
-use Vendor\Xmldoc\Crm\TimelinePublisher;
+use Ooofix\Xmlupd\Crm\CrmEntityWriter;
+use Ooofix\Xmlupd\Crm\DiskStorage;
+use Ooofix\Xmlupd\Crm\TimelinePublisher;
 
 /**
  * Сохранение XML.

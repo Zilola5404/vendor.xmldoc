@@ -1,10 +1,16 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 /** Версия и метаданные модуля */
 final class ModuleInfo
 {
+    public const MODULE_ID = 'ooofix.xmlupd';
+    public const MODULE_TITLE = 'Генерация XML (УПД)';
+    public const MODULE_DESCRIPTION = 'Формирование XML УПД из CRM: автоопределение коробка / облако Bitrix24';
+    public const PARTNER_NAME = 'ООО "РЕШЕНИЕ"';
+    public const PARTNER_URI = 'https://ooofix.ru';
+
     public static function version(): string
     {
         static $version = null;
@@ -25,6 +31,6 @@ final class ModuleInfo
 
     public static function programName(): string
     {
-        return 'vendor.xml ' . self::version();
+        return self::MODULE_ID . ' ' . self::version();
     }
 }

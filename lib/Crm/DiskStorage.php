@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
 use Bitrix\Main\Loader;
 
@@ -19,7 +19,7 @@ final class DiskStorage
         string $content,
         int $entityTypeId,
         int $entityId,
-        string $moduleId = 'vendor.xml'
+        string $moduleId = 'ooofix.xmlupd'
     ): array {
         $diskFileId = self::uploadToEntityDisk($storageName, $content, $entityTypeId, $entityId);
         if ($diskFileId > 0) {
@@ -31,7 +31,7 @@ final class DiskStorage
             'type'      => 'application/xml',
             'content'   => $content,
             'MODULE_ID' => $moduleId,
-        ], 'xmldoc');
+        ], 'xmlupd');
 
         return ['fileId' => $fileId, 'diskUploaded' => false];
     }

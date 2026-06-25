@@ -1,20 +1,20 @@
 <?php
 
-namespace Vendor\Xmldoc\Runtime;
+namespace Ooofix\Xmlupd\Runtime;
 
-use Vendor\Xmldoc\Contract\GenerateRuntimeInterface;
-use Vendor\Xmldoc\CrmPermissions;
-use Vendor\Xmldoc\DadataClient;
-use Vendor\Xmldoc\DataCollector;
-use Vendor\Xmldoc\DocumentStatus;
-use Vendor\Xmldoc\Documents\Upd\UpdBuilder;
-use Vendor\Xmldoc\Dto\GenerateRequestDto;
-use Vendor\Xmldoc\FileSaver;
-use Vendor\Xmldoc\GenerateResult;
-use Vendor\Xmldoc\Logger;
-use Vendor\Xmldoc\ValidationMessages;
-use Vendor\Xmldoc\XmlValidator;
-use Vendor\Xmldoc\Automation\TriggerService;
+use Ooofix\Xmlupd\Contract\GenerateRuntimeInterface;
+use Ooofix\Xmlupd\CrmPermissions;
+use Ooofix\Xmlupd\DadataClient;
+use Ooofix\Xmlupd\DataCollector;
+use Ooofix\Xmlupd\DocumentStatus;
+use Ooofix\Xmlupd\Documents\Upd\UpdBuilder;
+use Ooofix\Xmlupd\Dto\GenerateRequestDto;
+use Ooofix\Xmlupd\FileSaver;
+use Ooofix\Xmlupd\GenerateResult;
+use Ooofix\Xmlupd\Logger;
+use Ooofix\Xmlupd\ValidationMessages;
+use Ooofix\Xmlupd\XmlValidator;
+use Ooofix\Xmlupd\Automation\TriggerService;
 
 /** Общий конвейер генерации УПД для коробки и облака. */
 abstract class AbstractGenerateRuntime implements GenerateRuntimeInterface

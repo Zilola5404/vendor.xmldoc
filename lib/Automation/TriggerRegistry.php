@@ -1,12 +1,12 @@
 <?php
 
-namespace Vendor\Xmldoc\Automation;
+namespace Ooofix\Xmlupd\Automation;
 
-use Vendor\Xmldoc\Automation\Trigger\EdoAcceptedTrigger;
-use Vendor\Xmldoc\Automation\Trigger\EdoDeliveredTrigger;
-use Vendor\Xmldoc\Automation\Trigger\EdoRejectedTrigger;
-use Vendor\Xmldoc\Automation\Trigger\EdoSentTrigger;
-use Vendor\Xmldoc\Automation\Trigger\UpdGeneratedTrigger;
+use Ooofix\Xmlupd\Automation\Trigger\EdoAcceptedTrigger;
+use Ooofix\Xmlupd\Automation\Trigger\EdoDeliveredTrigger;
+use Ooofix\Xmlupd\Automation\Trigger\EdoRejectedTrigger;
+use Ooofix\Xmlupd\Automation\Trigger\EdoSentTrigger;
+use Ooofix\Xmlupd\Automation\Trigger\UpdGeneratedTrigger;
 
 /**
  * Каталог триггеров CRM автоматизации модуля.
@@ -14,11 +14,11 @@ use Vendor\Xmldoc\Automation\Trigger\UpdGeneratedTrigger;
  */
 final class TriggerRegistry
 {
-    public const CODE_UPD_GENERATED  = 'xmldoc.upd.generated';
-    public const CODE_EDO_SENT       = 'xmldoc.edo.sent';
-    public const CODE_EDO_DELIVERED  = 'xmldoc.edo.delivered';
-    public const CODE_EDO_ACCEPTED   = 'xmldoc.edo.accepted';
-    public const CODE_EDO_REJECTED   = 'xmldoc.edo.rejected';
+    public const CODE_UPD_GENERATED  = 'ooofix.xmlupd.upd.generated';
+    public const CODE_EDO_SENT       = 'ooofix.xmlupd.edo.sent';
+    public const CODE_EDO_DELIVERED  = 'ooofix.xmlupd.edo.delivered';
+    public const CODE_EDO_ACCEPTED   = 'ooofix.xmlupd.edo.accepted';
+    public const CODE_EDO_REJECTED   = 'ooofix.xmlupd.edo.rejected';
 
     /** @return list<class-string> */
     public static function triggerClasses(): array
@@ -47,7 +47,7 @@ final class TriggerRegistry
 
     public static function installAll(): void
     {
-        $adapter = \Vendor\Xmldoc\Crm\CrmAdapterFactory::create();
+        $adapter = \Ooofix\Xmlupd\Crm\CrmAdapterFactory::create();
 
         foreach (self::definitions() as $code => $name) {
             $adapter->registerAutomationTrigger($code, $name);

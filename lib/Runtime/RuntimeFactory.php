@@ -1,12 +1,13 @@
 <?php
 
-namespace Vendor\Xmldoc\Runtime;
+namespace Ooofix\Xmlupd\Runtime;
 
-use Vendor\Xmldoc\Cloud\CloudGenerateRuntime;
-use Vendor\Xmldoc\Contract\GenerateRuntimeInterface;
-use Vendor\Xmldoc\Environment\PortalEnvironment;
+use Ooofix\Xmlupd\Cloud\CloudGenerateRuntime;
+use Ooofix\Xmlupd\Contract\GenerateRuntimeInterface;
+use Ooofix\Xmlupd\Environment\PortalEnvironment;
+use Ooofix\Xmlupd\ModuleInfo;
 
-/** Выбор runtime по типу портала внутри одного модуля vendor.xml. */
+/** Выбор runtime по типу портала внутри одного модуля ooofix.xmlupd. */
 final class RuntimeFactory
 {
     public static function create(): GenerateRuntimeInterface
@@ -14,7 +15,7 @@ final class RuntimeFactory
         if (PortalEnvironment::isCloud()) {
             if (!class_exists(CloudGenerateRuntime::class)) {
                 throw new \RuntimeException(
-                    'Облачный runtime не найден. Обновите модуль vendor.xml до актуальной версии.'
+                    'Облачный runtime не найден. Обновите модуль ' . ModuleInfo::MODULE_ID . ' до актуальной версии.'
                 );
             }
 
@@ -26,6 +27,6 @@ final class RuntimeFactory
 
     public static function runtimeModuleId(): string
     {
-        return 'vendor.xml';
+        return ModuleInfo::MODULE_ID;
     }
 }

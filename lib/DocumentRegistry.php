@@ -1,9 +1,10 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
+use Ooofix\Xmlupd\Internal\Db;
 
 /** Реестр версий документов b_xmldoc_document (метаданные + file_id каждой версии) */
 class DocumentRegistry
@@ -11,13 +12,13 @@ class DocumentRegistry
     public static function getNextVersion(string $entityType, int $entityId): int
     {
         try {
-            $connection = Application::getConnection();
-            $row = $connection->query(
-                'SELECT MAX(VERSION) AS V FROM b_xmldoc_document WHERE ENTITY_TYPE = ? AND ENTITY_ID = ?',
-                [$entityType, $entityId]
-            )->fetch();
+            $helper = Application::getConnection()->getSqlHelper();
+            $rows = Db::fetchAll(
+                'SELECT MAX(VERSION) AS V FROM b_xmldoc_document WHERE ENTITY_TYPE = \''
+                . $helper->forSql($entityType) . '\' AND ENTITY_ID = ' . (int)$entityId
+            );
 
-            return ((int)($row['V'] ?? 0)) + 1;
+            return ((int)($rows[0]['V'] ?? 0)) + 1;
         } catch (\Throwable) {
             return 1;
         }
@@ -42,27 +43,19 @@ class DocumentRegistry
         $xmlFormatVersion = $xmlFormatVersion ?? Config::xmlFormatVersion();
 
         try {
-            $connection = Application::getConnection();
-            $sqlHelper = $connection->getSqlHelper();
-            $createdAt = $sqlHelper->getDateTimeFunction(new DateTime());
-
-            $connection->queryExecute(
-                "INSERT INTO b_xmldoc_document
-                    (ENTITY_TYPE, ENTITY_ID, DOC_NUMBER, FILE_NAME, FILE_ID, VERSION, ENCODING, FILE_HASH, DOC_STATUS, XML_FORMAT_VERSION, CREATED_AT)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, {$createdAt})",
-                [
-                    $entityType,
-                    $entityId,
-                    (string)$docNumber,
-                    $fileName,
-                    $fileId !== null && $fileId > 0 ? $fileId : null,
-                    $version,
-                    $encoding,
-                    $fileHash,
-                    $docStatus,
-                    $xmlFormatVersion,
-                ]
-            );
+            Db::insert('b_xmldoc_document', [
+                'ENTITY_TYPE'        => $entityType,
+                'ENTITY_ID'          => $entityId,
+                'DOC_NUMBER'         => (string)$docNumber,
+                'FILE_NAME'          => $fileName,
+                'FILE_ID'            => $fileId !== null && $fileId > 0 ? $fileId : null,
+                'VERSION'            => $version,
+                'ENCODING'           => $encoding,
+                'FILE_HASH'          => $fileHash,
+                'DOC_STATUS'         => $docStatus,
+                'XML_FORMAT_VERSION' => $xmlFormatVersion,
+                'CREATED_AT'         => new DateTime(),
+            ]);
         } catch (\Throwable) {
             // Реестр не должен блокировать выдачу файла пользователю
         }
@@ -75,9 +68,10 @@ class DocumentRegistry
         }
 
         try {
+            $helper = Application::getConnection()->getSqlHelper();
             Application::getConnection()->queryExecute(
-                'UPDATE b_xmldoc_document SET DOC_STATUS = ? WHERE ID = ?',
-                [$status, $registryId]
+                'UPDATE b_xmldoc_document SET DOC_STATUS = \''
+                . $helper->forSql($status) . '\' WHERE ID = ' . (int)$registryId
             );
 
             return true;
@@ -94,32 +88,20 @@ class DocumentRegistry
         $limit = max(1, min(500, $limit));
 
         try {
-            $connection = Application::getConnection();
+            $helper = Application::getConnection()->getSqlHelper();
             $where = '1=1';
-            $params = [];
 
             if ($entityType !== null && $entityType !== '') {
-                $where .= ' AND ENTITY_TYPE = ?';
-                $params[] = $entityType;
+                $where .= " AND ENTITY_TYPE = '" . $helper->forSql($entityType) . "'";
             }
             if ($entityId !== null && $entityId > 0) {
-                $where .= ' AND ENTITY_ID = ?';
-                $params[] = $entityId;
+                $where .= ' AND ENTITY_ID = ' . (int)$entityId;
             }
 
-            $params[] = $limit;
-
-            $rows = [];
-            $result = $connection->query(
-                "SELECT * FROM b_xmldoc_document WHERE {$where} ORDER BY ID DESC LIMIT ?",
-                $params
+            return Db::fetchAll(
+                'SELECT * FROM b_xmldoc_document WHERE ' . $where
+                . ' ORDER BY ID DESC LIMIT ' . (int)$limit
             );
-
-            while ($row = $result->fetch()) {
-                $rows[] = $row;
-            }
-
-            return $rows;
         } catch (\Throwable) {
             return [];
         }

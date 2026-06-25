@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Crm;
+namespace Ooofix\Xmlupd\Crm;
 
 /**
  * @deprecated Строки не масштабируются — цены берутся из CRM как есть.

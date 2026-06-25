@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Dto;
+namespace Ooofix\Xmlupd\Dto;
 
 /** Контекст CRM-сущности. XMLDOC-27 */
 final class EntityContextDto

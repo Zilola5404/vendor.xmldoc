@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Dto;
+namespace Ooofix\Xmlupd\Dto;
 
 /** Запись реестра документов. XMLDOC-27 */
 final class DocumentRecordDto

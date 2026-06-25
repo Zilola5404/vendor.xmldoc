@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc;
+namespace Ooofix\Xmlupd;
 
 use Bitrix\Crm\BankDetailTable;
 use Bitrix\Crm\ProductRowTable;
@@ -9,8 +9,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
-use Vendor\Xmldoc\Address\RequisiteAddressResolver;
-use Vendor\Xmldoc\Crm\ProductPriceNormalizer;
+use Ooofix\Xmlupd\Address\RequisiteAddressResolver;
+use Ooofix\Xmlupd\Crm\ProductPriceNormalizer;
 
 /**
  * Сбор всех данных для генерации УПД из CRM.
@@ -73,12 +73,21 @@ class DataCollector
             throw new \RuntimeException('Сделка не найдена: ' . $dealId);
         }
 
+        return $this->buildDealEntityFromRow($row, $dealId);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    protected function buildDealEntityFromRow(array $row, int $dealId): array
+    {
         $docDate = date('d.m.Y'); // по согласованию: дата генерации (позже — отдельное UF)
         $opportunity = (float)($row['OPPORTUNITY'] ?? 0);
         $taxValue = round((float)($row['TAX_VALUE'] ?? 0), 2);
 
         return [
-            'ID'              => (int)$row['ID'],
+            'ID'              => $dealId,
             'ENTITY_TYPE_ID'  => \CCrmOwnerType::Deal,
             'ENTITY_TYPE'     => self::TYPE_DEAL,
             'CATEGORY_ID'     => (int)($row['CATEGORY_ID'] ?? 0),
@@ -134,7 +143,7 @@ class DataCollector
     }
 
     /** @return array<string, mixed> */
-    private function fetchBuyer(int $companyId): array
+    protected function fetchBuyer(int $companyId): array
     {
         $company = \CCrmCompany::GetByID($companyId, false);
         if (!$company) {
@@ -188,7 +197,7 @@ class DataCollector
     /**
      * @return array<string, mixed>
      */
-    private function fetchRequisite(int $entityTypeId, int $entityId): array
+    protected function fetchRequisite(int $entityTypeId, int $entityId): array
     {
         $row = RequisiteTable::getList([
             'filter' => [
@@ -238,7 +247,7 @@ class DataCollector
     }
 
     /** @return array<string, mixed> */
-    private function fetchBankDetails(int $requisiteId): array
+    protected function fetchBankDetails(int $requisiteId): array
     {
         $row = BankDetailTable::getList([
             'filter' => ['=ENTITY_ID' => $requisiteId],
@@ -321,16 +330,20 @@ class DataCollector
     /** @return array<string, mixed> */
     private function fetchSignatory(): array
     {
+        $mode = Config::signatoryMode();
         $userId = 0;
 
-        if (Config::signatoryMode() === 'current_user') {
+        if ($mode === 'current_user') {
             global $USER;
             if ($USER instanceof \CUser && $USER->IsAuthorized()) {
                 $userId = (int)$USER->GetID();
             }
-        }
-
-        if ($userId <= 0) {
+        } elseif ($mode === 'by_position') {
+            $users = \Ooofix\Xmlupd\Admin\SettingsCrmData::usersByPosition(Config::signatoryPosition());
+            if ($users !== []) {
+                $userId = (int)$users[0]['id'];
+            }
+        } else {
             $userId = Config::signatoryUserId();
         }
 
@@ -349,6 +362,12 @@ class DataCollector
             ];
         }
 
+        $position = Config::signatoryPosition();
+        $workPosition = trim((string)($user['WORK_POSITION'] ?? ''));
+        if ($mode === 'by_position' && $workPosition !== '') {
+            $position = $workPosition;
+        }
+
         return [
             'NAME'         => trim(implode(' ', array_filter([
                 $user['LAST_NAME'] ?? '',
@@ -358,7 +377,7 @@ class DataCollector
             'LAST_NAME'    => (string)($user['LAST_NAME'] ?? ''),
             'FIRST_NAME'   => (string)($user['NAME'] ?? ''),
             'MIDDLE_NAME'  => (string)($user['SECOND_NAME'] ?? ''),
-            'POSITION'     => Config::signatoryPosition(),
+            'POSITION'     => $position,
             'USER_ID'      => $userId,
         ];
     }

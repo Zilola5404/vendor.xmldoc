@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Xmldoc\Person;
+namespace Ooofix\Xmlupd\Person;
 
 /** Разбор ФИО для XML (Фамилия / Имя / Отчество) */
 final class FioParser
